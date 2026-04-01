@@ -77,12 +77,9 @@ fn (c Client) build_headers_with_json() http.Header {
 fn (c Client) handle_response(resp http.Response) !json2.Any {
 	if resp.status_code < 200 || resp.status_code >= 300 {
 		if resp.body.len > 0 {
-			if err_resp := json2.decode[json2.Any](resp.body, json2.DecoderOptions{}) {
-				obj := err_resp.as_map()
-				if code := obj['code'] {
-					if msg := obj['msg'] {
-						return error('MiniMax API error ${code.int()}: ${msg.str()}')
-					}
+			if decoded := json2.decode[json2.Any](resp.body, json2.DecoderOptions{}) {
+				if api_error := c.api_error_message(decoded, resp) {
+					return error(api_error)
 				}
 			}
 		}
@@ -93,7 +90,32 @@ fn (c Client) handle_response(resp http.Response) !json2.Any {
 		return map[string]json2.Any{}
 	}
 
-	return json2.decode[json2.Any](resp.body, json2.DecoderOptions{})!
+	decoded := json2.decode[json2.Any](resp.body, json2.DecoderOptions{})!
+	if api_error := c.api_error_message(decoded, resp) {
+		return error(api_error)
+	}
+	return decoded
+}
+
+fn (c Client) api_error_message(decoded json2.Any, resp http.Response) ?string {
+	obj := decoded.as_map()
+	base_resp := obj['base_resp'] or { return none }
+	base_obj := base_resp.as_map()
+	status_code := base_obj['status_code'] or { return none }
+	if status_code.int() == 0 {
+		return none
+	}
+	status_msg := if msg := base_obj['status_msg'] { msg.str() } else { 'Unknown API error' }
+	trace_id := c.response_trace_id(resp)
+	mut message := 'MiniMax API error ${status_code.int()}: ${status_msg}'
+	if trace_id.len > 0 {
+		message += ' Trace-Id: ${trace_id}'
+	}
+	return message
+}
+
+fn (c Client) response_trace_id(resp http.Response) string {
+	return resp.header.get_custom('Trace-Id', exact: false) or { '' }
 }
 
 pub fn (c Client) text_to_audio(req TTSRequest) !map[string]json2.Any {

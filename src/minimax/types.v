@@ -141,7 +141,7 @@ pub struct APIError {
 
 pub const default_voice_id = 'female-shaonv'
 pub const default_speech_model = 'speech-2.6-hd'
-pub const default_t2v_model = 'MiniMax-Hailuo-02'
+pub const default_t2v_model = 'MiniMax-Hailuo-2.3'
 pub const default_t2i_model = 'image-01'
 pub const default_music_model = 'music-2.0'
 pub const default_speed = f64(1.0)

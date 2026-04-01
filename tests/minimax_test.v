@@ -19,3 +19,7 @@ fn test_tool_definitions_use_object_schemas() {
 		assert schema['type'].str() == 'object'
 	}
 }
+
+fn test_default_video_model_matches_reference() {
+	assert minimax.default_t2v_model == 'MiniMax-Hailuo-2.3'
+}

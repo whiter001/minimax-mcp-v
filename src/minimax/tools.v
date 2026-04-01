@@ -177,6 +177,14 @@ fn get_f64_field(obj map[string]json2.Any, key string, default_value f64) f64 {
 	return default_value
 }
 
+fn video_retry_interval() time.Duration {
+	return 20 * time.second
+}
+
+fn video_max_retries(model string) int {
+	return if model == 'MiniMax-Hailuo-02' { 60 } else { 30 }
+}
+
 pub fn tool_definitions() []mcp.Tool {
 	return [
 		mcp.Tool{
@@ -470,8 +478,8 @@ fn generate_video_handler(name string, arguments ?json2.Any) !mcp.CallToolResult
 	}
 
 	mut file_id := ''
-	max_retries := if model == 'MiniMax-Hailuo-02' { 60 } else { 30 }
-	retry_interval := 1 * time.second
+	max_retries := video_max_retries(model)
+	retry_interval := video_retry_interval()
 
 	for _ in 0 .. max_retries {
 		status_response := api_client().query_video(task_id.str())!

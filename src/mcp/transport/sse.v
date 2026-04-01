@@ -1,9 +1,6 @@
 module transport
 
 import net.http
-import json
-import protocol
-import protocol as proto
 
 // =============================================================================
 // SSE Transport
@@ -18,14 +15,14 @@ mut:
 
 // SSEClient represents a connected SSE client
 pub struct SSEClient {
-	id    int
-	tx    chan string
-	rx    chan string
+	id int
+	tx chan string
+	rx chan string
 }
 
-new_sse_server(port int) SSEServer {
+fn new_sse_server(port int) SSEServer {
 	return SSEServer{
-		port: port
+		port:         port
 		client_count: 0
 	}
 }
@@ -83,23 +80,28 @@ pub fn handle_sse_request(req http.Request) !http.Response {
 
 fn handle_sse_stream(req http.Request) !http.Response {
 	// Build SSE response headers
-	headers := http.new_header(
-		http.HeaderConfig{key: 'Content-Type', value: 'text/event-stream'}
-		http.HeaderConfig{key: 'Cache-Control', value: 'no-cache'}
-		http.HeaderConfig{key: 'Connection', value: 'keep-alive'}
-		http.HeaderConfig{key: 'Access-Control-Allow-Origin', value: '*'}
-	)
+	headers := http.new_header(http.HeaderConfig{ key: .content_type, value: 'text/event-stream' },
+		http.HeaderConfig{
+		key:   .cache_control
+		value: 'no-cache'
+	}, http.HeaderConfig{
+		key:   .connection
+		value: 'keep-alive'
+	}, http.HeaderConfig{
+		key:   .access_control_allow_origin
+		value: '*'
+	})
 
 	return http.Response{
 		status_code: 200
-		header: headers
-		body: ''
+		header:      headers
+		body:        ''
 	}
 }
 
 fn handle_sse_message(req http.Request) !http.Response {
 	// Parse the JSON-RPC message from request body
-	if req.body.len == 0 {
+	if req.data.len == 0 {
 		return error('Empty request body')
 	}
 
@@ -108,8 +110,11 @@ fn handle_sse_message(req http.Request) !http.Response {
 
 	return http.Response{
 		status_code: 200
-		header: http.new_header(http.HeaderConfig{key: 'Content-Type', value: 'application/json'})
-		body: '{"jsonrpc":"2.0","id":0,"result":{}}'
+		header:      http.new_header(http.HeaderConfig{
+			key:   .content_type
+			value: 'application/json'
+		})
+		body:        '{"jsonrpc":"2.0","id":0,"result":{}}'
 	}
 }
 
@@ -118,7 +123,7 @@ fn handle_sse_message(req http.Request) !http.Response {
 // =============================================================================
 
 // add_client adds a new SSE client
-pub fn (s &SSEServer) add_client() SSEClient {
+pub fn (mut s SSEServer) add_client() SSEClient {
 	s.client_count++
 	return SSEClient{
 		id: s.client_count

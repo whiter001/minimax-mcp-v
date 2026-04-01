@@ -1,7 +1,6 @@
 module mcp
 
-import json
-import protocol
+import x.json2
 import protocol as proto
 import transport
 
@@ -9,439 +8,284 @@ import transport
 // MCP Server
 // =============================================================================
 
-// McpServer is the main MCP server implementation
 pub struct McpServer {
 mut:
-	state             proto.ServerState
-	transport         transport.StdioTransport
-	capabilities      proto.ServerCapabilities
-	server_info       proto.Implementation
-	tools             []Tool
-	resource_handler  ?ResourceHandler
-	sampling_handler  ?SamplingHandler
-	roots_handler     ?RootsHandler
+	state            proto.ServerState
+	transport        transport.StdioTransport
+	capabilities     proto.ServerCapabilities
+	server_info      proto.Implementation
+	tools            []Tool
+	resource_handler ?ResourceHandler
+	sampling_handler ?SamplingHandler
+	roots_handler    ?RootsHandler
 }
 
-// Tool represents an MCP tool
 pub struct Tool {
-	name        string
-	description string
-	input_schema json.Value
-	handler     ToolHandler
+pub:
+	name         string
+	description  string
+	input_schema json2.Any
+	handler      ToolHandler
 }
 
-// ToolHandler is the function type for tool handlers
-pub type ToolHandler = fn (name string, arguments ?json.Value) !CallToolResult
+pub type ToolHandler = fn (name string, arguments ?json2.Any) !CallToolResult
 
-// ResourceHandler handles resource operations
-pub type ResourceHandler = fn (uri string) !ReadResourceResult
-
-// SamplingHandler handles sampling operations
-pub type SamplingHandler = fn (method string, arguments ?json.Value, max_tokens int) !CreateMessageResult
-
-// RootsHandler handles roots listing
-pub type RootsHandler = fn () !ListRootsResult
-
-// CallToolResult represents the result of a tool call
 pub struct CallToolResult {
 pub:
-	content []Content
+	content  []Content
 	is_error bool
 }
 
-// Content represents content in a tool result
 pub struct Content {
-	@type string
-	text   ?string
-	data   ?string
+pub:
+	@type     string
+	text      ?string
+	data      ?string
 	mime_type ?string
 }
 
-// ReadResourceResult represents the result of reading a resource
-pub struct ReadResourceResult {
-pub:
-	contents []ResourceContent
-}
-
-// ResourceContent represents a resource content
-pub struct ResourceContent {
-	uri       string
-	mime_type ?string
-	content   string
-}
-
-// CreateMessageResult represents the result of creating a sampling message
-pub struct CreateMessageResult {
-pub:
-	content []Content
-	has_consumer_applied bool
-}
-
-// ListRootsResult represents the result of listing roots
-pub struct ListRootsResult {
-pub:
-	roots []Root
-}
-
-// Root represents a root directory
-pub struct Root {
-	uri  string
-	name string
-}
-
-// new_server creates a new MCP server
 pub fn new_server() McpServer {
 	return McpServer{
-		state: .not_initialized
-		transport: transport.new_stdio_transport()
+		state:        .not_initialized
+		transport:    transport.new_stdio_transport()
 		capabilities: proto.default_server_capabilities()
-		server_info: proto.default_server_info()
-		tools: []
+		server_info:  proto.default_server_info()
+		tools:        []
 	}
 }
 
-// register_tool registers a tool with the server
-pub fn (s &McpServer) register_tool(tool Tool) {
+pub fn (mut s McpServer) register_tool(tool Tool) {
 	s.tools << tool
 }
 
-// set_resource_handler sets the resource handler
-pub fn (s &McpServer) set_resource_handler(handler ResourceHandler) {
+pub fn (mut s McpServer) set_resource_handler(handler ResourceHandler) {
 	s.resource_handler = handler
 }
 
-// set_sampling_handler sets the sampling handler
-pub fn (s &McpServer) set_sampling_handler(handler SamplingHandler) {
+pub fn (mut s McpServer) set_sampling_handler(handler SamplingHandler) {
 	s.sampling_handler = handler
 }
 
-// set_roots_handler sets the roots handler
-pub fn (s &McpServer) set_roots_handler(handler RootsHandler) {
+pub fn (mut s McpServer) set_roots_handler(handler RootsHandler) {
 	s.roots_handler = handler
 }
 
-// =============================================================================
-// Request Handling
-// =============================================================================
-
-// handle_message handles an incoming JSON-RPC message
-pub fn (s &McpServer) handle_message(raw_msg string) !protocol.JsonRpcResponse | protocol.JsonRpcNotification {
-	msg := protocol.parse_jsonrpc_message(raw_msg)!
-
-	// Handle different message types
-	match msg {
-		protocol.JsonRpcRequest {
-			return s.handle_request(msg)
-		}
-		protocol.JsonRpcNotification {
-			s.handle_notification(msg)
-			return none
-		}
-		protocol.JsonRpcResponse {
-			// Server doesn't handle responses to requests it didn't send
-			return error('Server received unexpected response')
-		}
+pub fn (mut s McpServer) handle_message(raw_msg string) !proto.JsonRpcResponseOrNotification {
+	msg := proto.parse_jsonrpc_message(raw_msg)!
+	if msg is proto.JsonRpcRequest {
+		resp := s.handle_request(msg)!
+		return resp
 	}
+	if msg is proto.JsonRpcNotification {
+		s.handle_notification(msg)
+		return msg
+	}
+	return error('Server received unexpected response')
 }
 
-fn (s &McpServer) handle_request(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	// Route request based on method
-	match req.method {
+fn (mut s McpServer) handle_request(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	return match req.method {
 		'initialize' {
-			return s.handle_initialize(req)
+			s.handle_initialize(req)
 		}
 		'tools/list' {
-			return s.handle_list_tools(req)
+			s.handle_list_tools(req)
 		}
 		'tools/call' {
-			return s.handle_call_tool(req)
+			s.handle_call_tool(req)
 		}
 		'resources/list' {
-			return s.handle_list_resources(req)
+			s.handle_list_resources(req)
 		}
 		'resources/read' {
-			return s.handle_read_resource(req)
+			s.handle_read_resource(req)
 		}
 		'resources/subscribe' {
-			return s.handle_subscribe_resource(req)
+			s.handle_subscribe_resource(req)
 		}
 		'resources/unsubscribe' {
-			return s.handle_unsubscribe_resource(req)
+			s.handle_unsubscribe_resource(req)
 		}
 		'sampling/createMessage' {
-			return s.handle_create_message(req)
+			s.handle_create_message(req)
 		}
 		'roots/list' {
-			return s.handle_list_roots(req)
+			s.handle_list_roots(req)
 		}
 		'ping' {
-			return s.handle_ping(req)
+			s.handle_ping(req)
 		}
 		else {
-			return protocol.build_error_response(
-				req.id,
-				proto.jsonrpc_method_not_found,
-				'Method not found: ${req.method}'
-			)
+			proto.build_error_response(req.id, proto.jsonrpc_method_not_found, 'Method not found: ${req.method}')
 		}
 	}
 }
 
-fn (s &McpServer) handle_notification(notif protocol.JsonRpcNotification) {
+fn (mut s McpServer) handle_notification(notif proto.JsonRpcNotification) {
 	match notif.method {
-		'initialized' {
-			s.state = .initialized
-		}
-		'notifications/cancelled' {
-			// Handle cancellation
-		}
-		'notifications/progress' {
-			// Handle progress
-		}
-		else {
-			// Unknown notification - ignore
-		}
+		'initialized' { s.state = .initialized }
+		'notifications/cancelled', 'notifications/progress' {}
+		else {}
 	}
 }
 
-// =============================================================================
-// Initialize
-// =============================================================================
-
-fn (s &McpServer) handle_initialize(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	// Parse client capabilities
+fn (mut s McpServer) handle_initialize(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
 	mut client_caps := proto.ClientCapabilities{}
-
-	if req.params != none {
-		params := req.params?
+	if params := req.params {
 		obj := params.as_map()
-		if obj.contains('capabilities') {
-			caps_val := obj['capabilities']
-			// Parse client capabilities from JSON value
+		if caps_val := obj['capabilities'] {
 			client_caps = parse_client_capabilities(caps_val)!
 		}
 	}
 
 	result := proto.build_initialize_result(proto.Implementation{}, client_caps)
-
 	s.state = .initialized
 
-	return protocol.build_response(req.id, json.Value(json.encode({
-		protocol_version: result.protocol_version
-		capabilities: result.capabilities
-		server_info: result.server_info
-		instructions: result.instructions or { '' }
-	})))
+	mut resp := map[string]json2.Any{}
+	resp['protocol_version'] = result.protocol_version
+	resp['capabilities'] = result.capabilities.to_json()
+	resp['server_info'] = result.server_info.to_json()
+	if instr := result.instructions {
+		resp['instructions'] = instr
+	}
+	return proto.build_response(req.id, resp)
 }
 
-fn parse_client_capabilities(value json.Value) !proto.ClientCapabilities {
-	// Simplified - in production would parse full capabilities
+fn parse_client_capabilities(value json2.Any) !proto.ClientCapabilities {
 	return proto.ClientCapabilities{}
 }
 
-// =============================================================================
-// Tools
-// =============================================================================
+fn (s &McpServer) handle_list_tools(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	mut tools := []json2.Any{}
+	for t in s.tools {
+		mut tool_obj := map[string]json2.Any{}
+		tool_obj['name'] = t.name
+		tool_obj['description'] = t.description
+		tool_obj['input_schema'] = t.input_schema
+		tools << tool_obj
+	}
 
-fn (s &McpServer) handle_list_tools(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	tools := s.tools.map(fn (t Tool) json.Value {
-		return json.Value(json.encode({
-			name: t.name
-			description: t.description
-			input_schema: t.input_schema
-		}))
-	})
-
-	result := json.Value(json.encode({ tools: tools }))
-	return protocol.build_response(req.id, result)
+	mut resp := map[string]json2.Any{}
+	resp['tools'] = tools
+	return proto.build_response(req.id, resp)
 }
 
-fn (s &McpServer) handle_call_tool(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	if req.params == none {
-		return protocol.build_error_response(
-			req.id,
-			proto.jsonrpc_invalid_params,
-			'Missing parameters for tools/call'
-		)
+fn (s &McpServer) handle_call_tool(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	params := req.params or {
+		return proto.build_error_response(req.id, proto.jsonrpc_invalid_params, 'Missing parameters for tools/call')
 	}
 
-	params := req.params?
 	obj := params.as_map()
 
-	name := obj['name'] or {
-		return protocol.build_error_response(
-			req.id,
-			proto.jsonrpc_invalid_params,
-			'Missing tool name'
-		)
+	name_val := obj['name'] or {
+		return proto.build_error_response(req.id, proto.jsonrpc_invalid_params, 'Missing tool name')
 	}
-
+	tool_name := name_val.str()
 	arguments := obj['arguments']
 
-	// Find the tool
-	tool := s.tools.find(fn (t Tool) bool {
-		return t.name == name.as_str()
-	}) or {
-		return protocol.build_error_response(
-			req.id,
-			proto.jsonrpc_method_not_found,
-			'Tool not found: ${name.as_str()}'
-		)
+	mut tool := Tool{}
+	mut found := false
+	for candidate in s.tools {
+		if candidate.name == tool_name {
+			tool = candidate
+			found = true
+			break
+		}
+	}
+	if !found {
+		return proto.build_error_response(req.id, proto.jsonrpc_method_not_found, 'Tool not found: ${tool_name}')
 	}
 
-	// Call the tool handler
-	result := tool.handler(name.as_str(), arguments)!
-
-	// Convert result to JSON
-	content_arr := result.content.map(fn (c Content) json.Value {
-		mut obj := map[string]json.Value{}
-		obj['type'] = json.Value(json.string(c.@type))
-		if c.text != none {
-			obj['text'] = json.Value(json.string(c.text?))
-		}
-		if c.data != none {
-			obj['data'] = json.Value(json.string(c.data?))
-		}
-		if c.mime_type != none {
-			obj['mimeType'] = json.Value(json.string(c.mime_type?))
-		}
-		return json.Value(json.encode(obj))
-	})
-
-	response_obj := {
-		content: content_arr
-		isError: result.is_error
+	result := tool.handler(tool_name, arguments) or {
+		return proto.build_error_response(req.id, proto.mcp_error_internal_error, err.msg())
 	}
 
-	return protocol.build_response(req.id, json.Value(json.encode(response_obj)))
+	mut content_arr := []json2.Any{}
+	for c in result.content {
+		mut content_obj := map[string]json2.Any{}
+		content_obj['type'] = c.@type
+		if text := c.text {
+			content_obj['text'] = text
+		}
+		if data := c.data {
+			content_obj['data'] = data
+		}
+		if mime := c.mime_type {
+			content_obj['mimeType'] = mime
+		}
+		content_arr << content_obj
+	}
+
+	mut resp_obj := map[string]json2.Any{}
+	resp_obj['content'] = content_arr
+	resp_obj['isError'] = result.is_error
+	return proto.build_response(req.id, resp_obj)
 }
 
-// =============================================================================
-// Resources
-// =============================================================================
-
-fn (s &McpServer) handle_list_resources(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	// Return empty list - resources are optional
-	result := json.Value(json.encode({ resources: []protocol.Resource{} }))
-	return protocol.build_response(req.id, result)
+fn (s &McpServer) handle_list_resources(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	mut resp := map[string]json2.Any{}
+	resp['resources'] = []json2.Any{}
+	return proto.build_response(req.id, resp)
 }
 
-fn (s &McpServer) handle_read_resource(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	if req.params == none {
-		return protocol.build_error_response(
-			req.id,
-			proto.jsonrpc_invalid_params,
-			'Missing parameters for resources/read'
-		)
+fn (s &McpServer) handle_read_resource(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	params := req.params or {
+		return proto.build_error_response(req.id, proto.jsonrpc_invalid_params, 'Missing parameters for resources/read')
 	}
 
-	params := req.params?
 	obj := params.as_map()
 
-	uri := obj['uri'] or {
-		return protocol.build_error_response(
-			req.id,
-			proto.jsonrpc_invalid_params,
-			'Missing resource URI'
-		)
+	uri_val := obj['uri'] or {
+		return proto.build_error_response(req.id, proto.jsonrpc_invalid_params, 'Missing resource URI')
+	}
+	handler := s.resource_handler or {
+		return proto.build_error_response(req.id, proto.mcp_error_internal_error, 'Resource handler not set')
 	}
 
-	if s.resource_handler == none {
-		return protocol.build_error_response(
-			req.id,
-			proto.mcp_error_internal_error,
-			'Resource handler not set'
-		)
+	result := handler(uri_val.str()) or {
+		return proto.build_error_response(req.id, proto.mcp_error_internal_error, err.msg())
+	}
+	return proto.build_response(req.id, result)
+}
+
+fn (s &McpServer) handle_subscribe_resource(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	return proto.build_response(req.id, map[string]json2.Any{})
+}
+
+fn (s &McpServer) handle_unsubscribe_resource(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	return proto.build_response(req.id, map[string]json2.Any{})
+}
+
+fn (s &McpServer) handle_create_message(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	if s.sampling_handler == none {
+		return proto.build_error_response(req.id, proto.mcp_error_internal_error, 'Sampling not implemented')
+	}
+	return proto.build_error_response(req.id, proto.mcp_error_internal_error, 'Sampling not implemented')
+}
+
+fn (s &McpServer) handle_list_roots(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	handler := s.roots_handler or {
+		return proto.build_error_response(req.id, proto.mcp_error_internal_error, 'Roots handler not set')
 	}
 
-	result := s.resource_handler!(uri.as_str())!
-
-	response_json := json.Value(json.encode({
-		contents: result.contents.map(fn (c ResourceContent) json.Value {
-			mut obj := map[string]json.Value{}
-			obj['uri'] = json.Value(json.string(c.uri))
-			if c.mime_type != none {
-				obj['mimeType'] = json.Value(json.string(c.mime_type?))
-			}
-			obj['content'] = json.Value(json.string(c.content))
-			return json.Value(json.encode(obj))
-		})
-	}))
-
-	return protocol.build_response(req.id, response_json)
-}
-
-fn (s &McpServer) handle_subscribe_resource(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	// Subscriptions are not implemented yet
-	return protocol.build_response(req.id, json.Value(json.encode({})))
-}
-
-fn (s &McpServer) handle_unsubscribe_resource(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	// Subscriptions are not implemented yet
-	return protocol.build_response(req.id, json.Value(json.encode({})))
-}
-
-// =============================================================================
-// Sampling
-// =============================================================================
-
-fn (s &McpServer) handle_create_message(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	return protocol.build_error_response(
-		req.id,
-		proto.mcp_error_internal_error,
-		'Sampling not implemented'
-	)
-}
-
-// =============================================================================
-// Roots
-// =============================================================================
-
-fn (s &McpServer) handle_list_roots(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	if s.roots_handler == none {
-		return protocol.build_error_response(
-			req.id,
-			proto.mcp_error_internal_error,
-			'Roots handler not set'
-		)
+	result := handler() or {
+		return proto.build_error_response(req.id, proto.mcp_error_internal_error, err.msg())
 	}
-
-	result := s.roots_handler!()
-
-	response_json := json.Value(json.encode({
-		roots: result.roots.map(fn (r Root) json.Value {
-			return json.Value(json.encode({
-				uri: r.uri
-				name: r.name
-			}))
-		})
-	}))
-
-	return protocol.build_response(req.id, response_json)
+	return proto.build_response(req.id, result)
 }
 
-// =============================================================================
-// Ping
-// =============================================================================
-
-fn (s &McpServer) handle_ping(req protocol.JsonRpcRequest) !protocol.JsonRpcResponse {
-	return protocol.build_response(req.id, json.Value(json.encode({})))
+fn (s &McpServer) handle_ping(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
+	return proto.build_response(req.id, map[string]json2.Any{})
 }
 
-// =============================================================================
-// Start Server
-// =============================================================================
-
-// start starts the MCP server with stdio transport
-pub fn (s &McpServer) start() {
-	transport := transport.new_stdio_transport()
-
-	handler := fn [s] (msg string) {
-		result := s.handle_message(msg)
-		if result != none {
-			transport.send(result!)
+pub fn (mut s McpServer) start() {
+	mut tr := transport.new_stdio_transport()
+	handler := fn [mut s, mut tr] (msg string) {
+		result := s.handle_message(msg) or { return }
+		match result {
+			proto.JsonRpcResponse { tr.send(result) or { return } }
+			proto.JsonRpcNotification { tr.send_notification(result) or { return } }
 		}
 	}
-
-	transport.start(handler)
+	tr.start(handler)
 }

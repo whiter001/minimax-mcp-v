@@ -1,6 +1,6 @@
 module mcp
 
-import json
+import x.json2
 
 // =============================================================================
 // Sampling Extension
@@ -8,34 +8,19 @@ import json
 
 // SamplingHandler handles sampling requests
 // This allows the server to request the client to sample an LLM
-pub type SamplingHandler = fn (method string, arguments ?json.Value, max_tokens int) !CreateMessageResult
-
-// CreateMessageResult is the result of creating a sampling message
-pub struct CreateMessageResult {
-	content               []Content
-	has_consumer_applied   bool
-}
+pub type SamplingHandler = fn (method string, arguments ?json2.Any, max_tokens int) !json2.Any
 
 // =============================================================================
 // Sampling Message
 // =============================================================================
-
-// SamplingMessage represents a message in a sampling request
-pub struct SamplingMessage {
-	role     string
-	content  string
-}
 
 // =============================================================================
 // Default Sampling Handler
 // =============================================================================
 
 // default_sampling_handler provides a default sampling handler
-fn default_sampling_handler(method string, arguments ?json.Value, max_tokens int) !CreateMessageResult {
-	return CreateMessageResult{
-		content: []
-		has_consumer_applied: false
-	}
+fn default_sampling_handler(method string, arguments ?json2.Any, max_tokens int) !json2.Any {
+	return map[string]json2.Any{}
 }
 
 // =============================================================================

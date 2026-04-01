@@ -1,0 +1,40 @@
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# V / build outputs
+bin/
+build/
+dist/
+out/
+coverage/
+.vmodules/
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+*.exe
+*.out
+*.test
+*.prof
+
+# Generated media / local artifacts
+*.mp3
+*.mp4
+*.wav
+*.jpg
+*.jpeg
+*.png
+*.log
+*.tmp
+*.bak
+tmp/
+temp/

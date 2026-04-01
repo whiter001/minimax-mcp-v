@@ -1,0 +1,21 @@
+module tests
+
+import src.minimax
+
+fn test_tool_definitions_cover_expected_tools() {
+	tools := minimax.tool_definitions()
+	assert tools.len == 9
+
+	names := tools.map(it.name)
+	for expected in ['text_to_audio', 'list_voices', 'voice_clone', 'play_audio', 'generate_video',
+		'query_video_generation', 'text_to_image', 'music_generation', 'voice_design'] {
+		assert expected in names
+	}
+}
+
+fn test_tool_definitions_use_object_schemas() {
+	for tool in minimax.tool_definitions() {
+		schema := tool.input_schema.as_map()
+		assert schema['type'].str() == 'object'
+	}
+}

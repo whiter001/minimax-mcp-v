@@ -6,29 +6,21 @@ import os
 // Environment Variables
 // =============================================================================
 
-const (
-	env_minimax_api_key       = 'MINIMAX_API_KEY'
-	env_minimax_api_host      = 'MINIMAX_API_HOST'
-	env_minimax_mcp_base_path = 'MINIMAX_MCP_BASE_PATH'
-	env_resource_mode         = 'MINIMAX_API_RESOURCE_MODE'
-	env_mcp_port              = 'MINIMAX_MCP_PORT'
-	env_mcp_mode              = 'MINIMAX_MCP_MODE'
-)
+const env_minimax_api_key = 'MINIMAX_API_KEY'
+const env_minimax_api_host = 'MINIMAX_API_HOST'
+const env_minimax_mcp_base_path = 'MINIMAX_MCP_BASE_PATH'
+const env_resource_mode = 'MINIMAX_API_RESOURCE_MODE'
+const env_mcp_port = 'MINIMAX_MCP_PORT'
+const env_mcp_mode = 'MINIMAX_MCP_MODE'
 
-const (
-	resource_mode_url   = 'url'
-	resource_mode_local = 'local'
-)
+const resource_mode_url = 'url'
+const resource_mode_local = 'local'
 
-const (
-	mode_stdio = 'stdio'
-	mode_sse   = 'sse'
-)
+const mode_stdio = 'stdio'
+const mode_sse = 'sse'
 
-const (
-	default_api_host = 'https://api.minimax.io'
-	default_port      = 3000
-)
+const default_api_host = 'https://api.minimax.io'
+const default_port = 3000
 
 // =============================================================================
 // Config
@@ -56,12 +48,12 @@ pub fn load_config() !Config {
 		return error('${env_minimax_api_host} environment variable is required')
 	}
 
-	base_path := os.getenv(env_minimax_mcp_base_path)
+	mut base_path := os.getenv(env_minimax_mcp_base_path)
 	if base_path.len == 0 {
 		base_path = os.home_dir() + '/Desktop'
 	}
 
-	resource_mode := os.getenv(env_resource_mode)
+	mut resource_mode := os.getenv(env_resource_mode)
 	if resource_mode.len == 0 {
 		resource_mode = resource_mode_url
 	}
@@ -73,18 +65,18 @@ pub fn load_config() !Config {
 		default_port
 	}
 
-	mode := os.getenv(env_mcp_mode)
+	mut mode := os.getenv(env_mcp_mode)
 	if mode.len == 0 {
 		mode = mode_stdio
 	}
 
 	return Config{
-		api_key: api_key
-		host: host
-		base_path: base_path
+		api_key:       api_key
+		host:          host
+		base_path:     base_path
 		resource_mode: resource_mode
-		port: port
-		mode: mode
+		port:          port
+		mode:          mode
 	}
 }
 

@@ -1,6 +1,6 @@
 module minimax
 
-import json
+import x.json2
 
 // =============================================================================
 // API Types
@@ -14,8 +14,9 @@ pub struct Voice {
 
 // VoiceList represents the response from list voices API
 pub struct VoiceList {
-	system_voice      []Voice
-	voice_cloning     []Voice
+pub mut:
+	system_voice  []Voice
+	voice_cloning []Voice
 }
 
 // =============================================================================
@@ -35,8 +36,8 @@ pub struct TTSRequest {
 // VoiceSetting represents voice configuration
 pub struct VoiceSetting {
 	voice_id string
-	speed    float
-	vol      float
+	speed    f64
+	vol      f64
 	pitch    int
 	emotion  string
 }
@@ -73,10 +74,10 @@ pub struct VideoQueryRequest {
 
 // ImageGenerationRequest represents an image generation request
 pub struct ImageGenerationRequest {
-	model          string
-	prompt         string
-	aspect_ratio   string
-	n              int
+	model            string
+	prompt           string
+	aspect_ratio     string
+	n                int
 	prompt_optimizer bool
 }
 
@@ -86,9 +87,9 @@ pub struct ImageGenerationRequest {
 
 // MusicGenerationRequest represents a music generation request
 pub struct MusicGenerationRequest {
-	model        string
-	prompt       string
-	lyrics       string
+	model         string
+	prompt        string
+	lyrics        string
 	audio_setting MusicSetting
 	output_format ?string
 }
@@ -106,10 +107,10 @@ pub struct MusicSetting {
 
 // VoiceCloneRequest represents a voice clone request
 pub struct VoiceCloneRequest {
-	file_id   string
-	voice_id  string
-	text      ?string
-	model     ?string
+	file_id  string
+	voice_id string
+	text     ?string
+	model    ?string
 }
 
 // =============================================================================
@@ -131,7 +132,7 @@ pub struct VoiceDesignRequest {
 pub struct APIError {
 	code    int
 	message string
-	data    ?json.Value
+	data    ?json2.Any
 }
 
 // =============================================================================
@@ -143,8 +144,8 @@ pub const default_speech_model = 'speech-2.6-hd'
 pub const default_t2v_model = 'MiniMax-Hailuo-02'
 pub const default_t2i_model = 'image-01'
 pub const default_music_model = 'music-2.0'
-pub const default_speed = 1.0
-pub const default_volume = 1.0
+pub const default_speed = f64(1.0)
+pub const default_volume = f64(1.0)
 pub const default_pitch = 0
 pub const default_emotion = 'happy'
 pub const default_sample_rate = 32000
@@ -157,24 +158,20 @@ pub const default_language_boost = 'auto'
 // API Endpoints
 // =============================================================================
 
-pub const (
-	endpoint_t2a_v2            = '/v1/t2a_v2'
-	endpoint_get_voice         = '/v1/get_voice'
-	endpoint_voice_clone       = '/v1/voice_clone'
-	endpoint_video_generation  = '/v1/video_generation'
-	endpoint_image_generation  = '/v1/image_generation'
-	endpoint_music_generation  = '/v1/music_generation'
-	endpoint_voice_design      = '/v1/voice_design'
-	endpoint_files_upload      = '/v1/files/upload'
-	endpoint_files_retrieve    = '/v1/files/retrieve'
-)
+pub const endpoint_t2a_v2 = '/v1/t2a_v2'
+pub const endpoint_get_voice = '/v1/get_voice'
+pub const endpoint_voice_clone = '/v1/voice_clone'
+pub const endpoint_video_generation = '/v1/video_generation'
+pub const endpoint_image_generation = '/v1/image_generation'
+pub const endpoint_music_generation = '/v1/music_generation'
+pub const endpoint_voice_design = '/v1/voice_design'
+pub const endpoint_files_upload = '/v1/files/upload'
+pub const endpoint_files_retrieve = '/v1/files/retrieve'
 
 // =============================================================================
 // API Error Codes
 // =============================================================================
 
-pub const (
-	error_auth                  = 1004
-	error_need_real_name        = 2038
-	error_request_timeout       = 1002
-)
+pub const error_auth = 1004
+pub const error_need_real_name = 2038
+pub const error_request_timeout = 1002

@@ -1,6 +1,6 @@
 module protocol
 
-import json
+import x.json2
 
 // =============================================================================
 // Default Server Capabilities
@@ -9,12 +9,12 @@ import json
 // default_server_capabilities returns the default server capabilities for MiniMax MCP
 pub fn default_server_capabilities() ServerCapabilities {
 	return ServerCapabilities{
-		tools: ToolsCapability{}
+		tools:     ToolsCapability{}
 		resources: ResourcesCapability{
 			subscribe: true
 		}
-		sampling: SamplingCapability{}
-		roots: RootsCapability{
+		sampling:  SamplingCapability{}
+		roots:     RootsCapability{
 			list: true
 		}
 	}
@@ -30,7 +30,7 @@ pub const server_version = '0.0.1'
 // default_server_info returns the default server info
 pub fn default_server_info() Implementation {
 	return Implementation{
-		name: server_name
+		name:    server_name
 		version: server_version
 	}
 }
@@ -64,7 +64,8 @@ pub fn (c ServerCapabilities) has_resource_subscribe() bool {
 	if c.resources == none {
 		return false
 	}
-	return c.resources?.subscribe
+	res := c.resources or { return false }
+	return res.subscribe
 }
 
 // has_roots_list returns true if the server supports listing roots
@@ -72,7 +73,8 @@ pub fn (c ServerCapabilities) has_roots_list() bool {
 	if c.roots == none {
 		return false
 	}
-	return c.roots?.list
+	res := c.roots or { return false }
+	return res.list
 }
 
 // =============================================================================
@@ -80,38 +82,38 @@ pub fn (c ServerCapabilities) has_roots_list() bool {
 // =============================================================================
 
 // capabilities_to_json serializes server capabilities to JSON value
-pub fn (c ServerCapabilities) to_json() json.Value {
-	mut obj := map[string]json.Value{}
+pub fn (c ServerCapabilities) to_json() json2.Any {
+	mut obj := map[string]json2.Any{}
 
 	if c.tools != none {
-		obj['tools'] = json.Value(json.bool(true))
+		obj['tools'] = true
 	}
 
-	if c.resources != none {
-		mut res_obj := map[string]json.Value{}
-		res_obj['subscribe'] = json.Value(json.bool(c.resources?.subscribe))
-		obj['resources'] = json.Value(json.encode(res_obj))
+	if res := c.resources {
+		mut res_obj := map[string]json2.Any{}
+		res_obj['subscribe'] = res.subscribe
+		obj['resources'] = res_obj
 	}
 
 	if c.sampling != none {
-		obj['sampling'] = json.Value(json.bool(true))
+		obj['sampling'] = true
 	}
 
-	if c.roots != none {
-		mut roots_obj := map[string]json.Value{}
-		roots_obj['list'] = json.Value(json.bool(c.roots?.list))
-		obj['roots'] = json.Value(json.encode(roots_obj))
+	if roots := c.roots {
+		mut roots_obj := map[string]json2.Any{}
+		roots_obj['list'] = roots.list
+		obj['roots'] = roots_obj
 	}
 
-	return json.Value(json.encode(obj))
+	return obj
 }
 
 // implementation_to_json serializes an implementation to JSON value
-pub fn (i Implementation) to_json() json.Value {
-	mut obj := map[string]json.Value{}
-	obj['name'] = json.Value(json.string(i.name))
-	obj['version'] = json.Value(json.string(i.version))
-	return json.Value(json.encode(obj))
+pub fn (i Implementation) to_json() json2.Any {
+	mut obj := map[string]json2.Any{}
+	obj['name'] = i.name
+	obj['version'] = i.version
+	return obj
 }
 
 // =============================================================================
@@ -122,8 +124,8 @@ pub fn (i Implementation) to_json() json.Value {
 pub fn build_initialize_result(client_info Implementation, client_caps ClientCapabilities) InitializeResult {
 	return InitializeResult{
 		protocol_version: protocol_version
-		capabilities: default_server_capabilities()
-		server_info: default_server_info()
-		instructions: none
+		capabilities:     default_server_capabilities()
+		server_info:      default_server_info()
+		instructions:     none
 	}
 }

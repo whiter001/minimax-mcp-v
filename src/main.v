@@ -1,9 +1,8 @@
 module main
 
-import minimax
-import utils
-import mcp
-import protocol
+import src.utils
+import src.mcp
+import src.minimax
 
 // =============================================================================
 // MiniMax MCP Server
@@ -51,7 +50,7 @@ fn main() {
 	println('  Port: ${config.port}')
 
 	// Create server
-	server := new_minimax_server(config)
+	mut server := new_minimax_server(config)
 
 	// Start server based on mode
 	match config.mode {

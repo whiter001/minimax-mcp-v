@@ -2,7 +2,6 @@ module transport
 
 import os
 import io
-import json
 import protocol
 
 // =============================================================================
@@ -23,14 +22,14 @@ pub type StdioTransportMessageHandler = fn (msg string)
 // new_stdio_transport creates a new stdio transport
 pub fn new_stdio_transport() StdioTransport {
 	return StdioTransport{
-		reader: io.new_buffered_reader(os.stdin)
-		writer: io.new_buffered_writer(os.stdout)
+		reader: io.new_buffered_reader(reader: os.stdin())
+		writer: io.new_buffered_writer(writer: os.stdout()) or { panic(err) }
 	}
 }
 
 // start starts the stdio transport and processes messages
 // This function blocks until the transport is closed
-pub fn (t StdioTransport) start(handler StdioTransportMessageHandler) {
+pub fn (mut t StdioTransport) start(handler StdioTransportMessageHandler) {
 	for {
 		line := t.reader.read_line() or {
 			// EOF or error - exit gracefully
@@ -46,19 +45,19 @@ pub fn (t StdioTransport) start(handler StdioTransportMessageHandler) {
 }
 
 // send sends a JSON-RPC message to stdout
-pub fn (t StdioTransport) send(resp protocol.JsonRpcResponse) ! {
+pub fn (mut t StdioTransport) send(resp protocol.JsonRpcResponse) ! {
 	raw := protocol.response_to_json(resp)!
 	// Add newline for JSON Lines format
-	t.writer.write(raw.str())!
+	t.writer.write(raw.bytes())!
 	t.writer.write('\n'.bytes())!
 	t.writer.flush()!
 }
 
 // send_notification sends a JSON-RPC notification to stdout
-pub fn (t StdioTransport) send_notification(notification protocol.JsonRpcNotification) ! {
+pub fn (mut t StdioTransport) send_notification(notification protocol.JsonRpcNotification) ! {
 	raw := protocol.notification_to_json(notification)!
 	// Add newline for JSON Lines format
-	t.writer.write(raw.str())!
+	t.writer.write(raw.bytes())!
 	t.writer.write('\n'.bytes())!
 	t.writer.flush()!
 }
@@ -79,6 +78,6 @@ pub struct StdioTransportConfig {
 
 // read_json_message reads a JSON message from a channel of strings
 // This is used with the stdio transport to process incoming messages
-pub fn read_json_message(line string) !protocol.JsonRpcRequest | protocol.JsonRpcResponse | protocol.JsonRpcNotification {
+pub fn read_json_message(line string) !protocol.JsonRpcMessage {
 	return protocol.parse_jsonrpc_message(line)
 }

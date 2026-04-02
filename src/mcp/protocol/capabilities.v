@@ -86,7 +86,7 @@ pub fn (c ServerCapabilities) to_json() json2.Any {
 	mut obj := map[string]json2.Any{}
 
 	if c.tools != none {
-		obj['tools'] = true
+		obj['tools'] = map[string]json2.Any{}
 	}
 
 	if res := c.resources {

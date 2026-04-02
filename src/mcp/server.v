@@ -142,9 +142,9 @@ fn (mut s McpServer) handle_initialize(req proto.JsonRpcRequest) !proto.JsonRpcR
 	s.state = .initialized
 
 	mut resp := map[string]json2.Any{}
-	resp['protocol_version'] = result.protocol_version
+	resp['protocolVersion'] = result.protocol_version
 	resp['capabilities'] = result.capabilities.to_json()
-	resp['server_info'] = result.server_info.to_json()
+	resp['serverInfo'] = result.server_info.to_json()
 	if instr := result.instructions {
 		resp['instructions'] = instr
 	}

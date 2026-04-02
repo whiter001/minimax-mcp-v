@@ -20,7 +20,7 @@ const mode_stdio = 'stdio'
 const mode_sse = 'sse'
 
 const default_api_host = 'https://api.minimaxi.com'
-const default_port = 3000
+const default_port = 33000
 
 // =============================================================================
 // Config

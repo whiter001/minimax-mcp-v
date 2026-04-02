@@ -248,6 +248,18 @@ pub fn tool_definitions() []mcp.Tool {
 			input_schema: object_schema()
 			handler:      voice_design_handler
 		},
+		mcp.Tool{
+			name:         'web_search'
+			description:  'Search the web and get structured results including titles, links, snippets, and related searches.'
+			input_schema: object_schema()
+			handler:      web_search_handler
+		},
+		mcp.Tool{
+			name:         'understand_image'
+			description:  'Analyze images from URLs or local files, supporting JPEG, PNG, and WebP formats.'
+			input_schema: object_schema()
+			handler:      understand_image_handler
+		},
 	]
 }
 
@@ -781,6 +793,57 @@ fn voice_design_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 			mcp.Content{
 				@type: 'text'
 				text:  'Success. Voice ID generated: ${generated_voice_id.str()}'
+			},
+		]
+		is_error: false
+	}
+}
+
+fn web_search_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
+	args := arguments or { return error('Missing arguments') }
+	obj := args.as_map()
+
+	query := obj['query'] or { return error('Missing query') }
+
+	req := SearchRequest{
+		query: query.str()
+	}
+
+	result := api_client().search(req)!
+
+	return mcp.CallToolResult{
+		content:  [
+			mcp.Content{
+				@type: 'text'
+				text:  json2.encode(result, json2.EncoderOptions{ prettify: true })
+			},
+		]
+		is_error: false
+	}
+}
+
+fn understand_image_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
+	args := arguments or { return error('Missing arguments') }
+	obj := args.as_map()
+
+	prompt := obj['prompt'] or { return error('Missing prompt') }
+	image_source := obj['image_source'] or { return error('Missing image_source') }
+
+	processed_image_url := process_image_url(image_source.str())!
+
+	req := VLMRequest{
+		prompt:    prompt.str()
+		image_url: processed_image_url
+	}
+
+	result := api_client().vlm(req)!
+	content := result['content'] or { return error('No content in response') }
+
+	return mcp.CallToolResult{
+		content:  [
+			mcp.Content{
+				@type: 'text'
+				text:  content.str()
 			},
 		]
 		is_error: false

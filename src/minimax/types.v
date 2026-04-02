@@ -167,6 +167,8 @@ pub const endpoint_music_generation = '/v1/music_generation'
 pub const endpoint_voice_design = '/v1/voice_design'
 pub const endpoint_files_upload = '/v1/files/upload'
 pub const endpoint_files_retrieve = '/v1/files/retrieve'
+pub const endpoint_search = '/v1/coding_plan/search'
+pub const endpoint_vlm = '/v1/coding_plan/vlm'
 
 // =============================================================================
 // API Error Codes
@@ -175,3 +177,37 @@ pub const endpoint_files_retrieve = '/v1/files/retrieve'
 pub const error_auth = 1004
 pub const error_need_real_name = 2038
 pub const error_request_timeout = 1002
+
+// =============================================================================
+// Search Types
+// =============================================================================
+
+pub struct SearchRequest {
+	query string
+}
+
+pub struct SearchResult {
+mut:
+	organic        []SearchOrganic
+	related_searches []SearchRelated
+}
+
+pub struct SearchOrganic {
+	title   string
+	link    string
+	snippet string
+	date    string
+}
+
+pub struct SearchRelated {
+	query string
+}
+
+// =============================================================================
+// VLM Types
+// =============================================================================
+
+pub struct VLMRequest {
+	prompt    string
+	image_url string
+}

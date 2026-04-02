@@ -2,6 +2,8 @@ module minimax
 
 import net.http
 import x.json2
+import encoding.base64
+import os
 
 // =============================================================================
 // Minimax API Client
@@ -116,6 +118,61 @@ fn (c Client) api_error_message(decoded json2.Any, resp http.Response) ?string {
 
 fn (c Client) response_trace_id(resp http.Response) string {
 	return resp.header.get_custom('Trace-Id', exact: false) or { '' }
+}
+
+// process_image_url converts image URL or local path to base64 data URL
+fn process_image_url(image_url string) !string {
+	mut img_url := image_url
+
+	// Remove @ prefix if present
+	if img_url.starts_with('@') {
+		img_url = img_url[1..]
+	}
+
+	// If already in base64 data URL format, pass through
+	if img_url.starts_with('data:') {
+		return img_url
+	}
+
+	// Handle HTTP/HTTPS URLs
+	if img_url.starts_with('http://') || img_url.starts_with('https://') {
+		resp := http.fetch(url: img_url, method: .get)!
+		if resp.status_code < 200 || resp.status_code >= 300 {
+			return error('Failed to download image from URL: HTTP ${resp.status_code}')
+		}
+
+		// Detect image format from content-type header
+		content_type := resp.header.get(.content_type) or { 'image/jpeg' }
+		image_format := if content_type.contains('png') {
+			'png'
+		} else if content_type.contains('webp') {
+			'webp'
+		} else {
+			'jpeg'
+		}
+
+		base64_data := base64.encode(resp.body.bytes())
+		return 'data:image/${image_format};base64,${base64_data}'
+	}
+
+	// Handle local file paths
+	if !os.exists(img_url) {
+		return error('Local image file does not exist: ${img_url}')
+	}
+
+	image_data := os.read_file(img_url)!
+
+	// Detect image format from file extension
+	image_format := if img_url.to_lower().ends_with('.png') {
+		'png'
+	} else if img_url.to_lower().ends_with('.webp') {
+		'webp'
+	} else {
+		'jpeg'
+	}
+
+	base64_data := base64.encode(image_data.bytes())
+	return 'data:image/${image_format};base64,${base64_data}'
 }
 
 pub fn (c Client) text_to_audio(req TTSRequest) !map[string]json2.Any {
@@ -268,4 +325,17 @@ pub fn (c Client) design_voice(req VoiceDesignRequest) !map[string]json2.Any {
 		body['voice_id'] = voice_id
 	}
 	return c.post(endpoint_voice_design, body)!.as_map()
+}
+
+pub fn (c Client) search(req SearchRequest) !map[string]json2.Any {
+	mut body := map[string]json2.Any{}
+	body['q'] = req.query
+	return c.post(endpoint_search, body)!.as_map()
+}
+
+pub fn (c Client) vlm(req VLMRequest) !map[string]json2.Any {
+	mut body := map[string]json2.Any{}
+	body['prompt'] = req.prompt
+	body['image_url'] = req.image_url
+	return c.post(endpoint_vlm, body)!.as_map()
 }

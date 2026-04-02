@@ -13,8 +13,15 @@ pub fn init_client(api_key string, host string) {
 	_ = host
 }
 
+const default_api_host = 'https://api.minimaxi.com'
+
 fn api_client() Client {
-	return new_client(os.getenv('MINIMAX_API_KEY'), os.getenv('MINIMAX_API_HOST'))
+	api_key := os.getenv('MINIMAX_API_KEY')
+	host := os.getenv('MINIMAX_API_HOST')
+	if host.len == 0 {
+		return new_client(api_key, default_api_host)
+	}
+	return new_client(api_key, host)
 }
 
 // =============================================================================

@@ -284,7 +284,7 @@ pub fn (mut s McpServer) start() {
 		result := s.handle_message(msg) or { return }
 		match result {
 			proto.JsonRpcResponse { tr.send(result) or { return } }
-			proto.JsonRpcNotification { tr.send_notification(result) or { return } }
+			proto.JsonRpcNotification {}
 		}
 	}
 	tr.start(handler)

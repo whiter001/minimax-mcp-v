@@ -8,6 +8,6 @@ minimax-mcp-v
 它会依次执行：
 
 - `v fmt -w src tests`
-- `v src/main.v`
+- `v -d mbedtls_client_read_timeout_ms=100000 src/main.v`
 
 请在仓库根目录下运行它。

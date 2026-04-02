@@ -19,7 +19,7 @@ const resource_mode_local = 'local'
 const mode_stdio = 'stdio'
 const mode_sse = 'sse'
 
-const default_api_host = 'https://api.minimax.io'
+const default_api_host = 'https://api.minimaxi.com'
 const default_port = 3000
 
 // =============================================================================
@@ -43,9 +43,9 @@ pub fn load_config() !Config {
 		return error('${env_minimax_api_key} environment variable is required')
 	}
 
-	host := os.getenv(env_minimax_api_host)
+	mut host := os.getenv(env_minimax_api_host)
 	if host.len == 0 {
-		return error('${env_minimax_api_host} environment variable is required')
+		host = default_api_host
 	}
 
 	mut base_path := os.getenv(env_minimax_mcp_base_path)

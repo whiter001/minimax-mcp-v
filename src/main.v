@@ -36,7 +36,7 @@ fn new_minimax_server(config utils.Config) MinimaxMcpServer {
 // =============================================================================
 
 fn main() {
-	println('Starting MiniMax MCP server...')
+	eprintln('Starting MiniMax MCP server...')
 
 	// Load configuration
 	config := utils.load_config() or {
@@ -44,10 +44,10 @@ fn main() {
 		return
 	}
 
-	println('Config loaded:')
-	println('  API Host: ${config.host}')
-	println('  Mode: ${config.mode}')
-	println('  Port: ${config.port}')
+	eprintln('Config loaded:')
+	eprintln('  API Host: ${config.host}')
+	eprintln('  Mode: ${config.mode}')
+	eprintln('  Port: ${config.port}')
 
 	// Create server
 	mut server := new_minimax_server(config)
@@ -55,11 +55,11 @@ fn main() {
 	// Start server based on mode
 	match config.mode {
 		'stdio' {
-			println('Starting in stdio mode...')
+			eprintln('Starting in stdio mode...')
 			server.server.start()
 		}
 		'sse' {
-			println('Starting in SSE mode on port ${config.port}...')
+			eprintln('Starting in SSE mode on port ${config.port}...')
 			// TODO: Implement SSE transport
 			eprintln('SSE mode not yet implemented')
 		}

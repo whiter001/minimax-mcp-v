@@ -19,6 +19,56 @@ mut:
 // StdioTransportMessageHandler is called when a message is received
 pub type StdioTransportMessageHandler = fn (msg string)
 
+const content_length_prefix = 'Content-Length:'
+
+fn read_stdin_message(mut reader io.BufferedReader) !string {
+	mut content_length := 0
+	mut saw_content_length := false
+
+	for {
+		line := reader.read_line() or { return error('EOF') }
+		trimmed := line.trim_space()
+
+		if trimmed.len == 0 {
+			if saw_content_length {
+				break
+			}
+			continue
+		}
+
+		if trimmed.starts_with(content_length_prefix) {
+			length_str := trimmed[content_length_prefix.len..].trim_space()
+			content_length = length_str.int()
+			saw_content_length = true
+			continue
+		}
+
+		// Plain JSON-line mode: use the line directly.
+		if !saw_content_length {
+			return trimmed
+		}
+	}
+
+	if saw_content_length {
+		if content_length <= 0 {
+			return error('Invalid Content-Length')
+		}
+
+		mut body := []u8{len: content_length}
+		mut read := 0
+		for read < content_length {
+			n := reader.read(mut body[read..]) or { return error('EOF') }
+			if n == 0 {
+				return error('EOF')
+			}
+			read += n
+		}
+		return body.bytestr()
+	}
+
+	return error('EOF')
+}
+
 // new_stdio_transport creates a new stdio transport
 pub fn new_stdio_transport() StdioTransport {
 	return StdioTransport{
@@ -31,7 +81,7 @@ pub fn new_stdio_transport() StdioTransport {
 // This function blocks until the transport is closed
 pub fn (mut t StdioTransport) start(handler StdioTransportMessageHandler) {
 	for {
-		line := t.reader.read_line() or {
+		line := read_stdin_message(mut t.reader) or {
 			// EOF or error - exit gracefully
 			break
 		}
@@ -47,18 +97,16 @@ pub fn (mut t StdioTransport) start(handler StdioTransportMessageHandler) {
 // send sends a JSON-RPC message to stdout
 pub fn (mut t StdioTransport) send(resp protocol.JsonRpcResponse) ! {
 	raw := protocol.response_to_json(resp)!
-	// Add newline for JSON Lines format
-	t.writer.write(raw.bytes())!
-	t.writer.write('\n'.bytes())!
+	frame := 'Content-Length: ${raw.bytes().len}\r\n\r\n${raw}'
+	t.writer.write(frame.bytes())!
 	t.writer.flush()!
 }
 
 // send_notification sends a JSON-RPC notification to stdout
 pub fn (mut t StdioTransport) send_notification(notification protocol.JsonRpcNotification) ! {
 	raw := protocol.notification_to_json(notification)!
-	// Add newline for JSON Lines format
-	t.writer.write(raw.bytes())!
-	t.writer.write('\n'.bytes())!
+	frame := 'Content-Length: ${raw.bytes().len}\r\n\r\n${raw}'
+	t.writer.write(frame.bytes())!
 	t.writer.flush()!
 }
 
@@ -76,7 +124,7 @@ pub struct StdioTransportConfig {
 // Line-based JSON Reading
 // =============================================================================
 
-// read_json_message reads a JSON message from a channel of strings
+// read_json_message reads a JSON message from a single string payload
 // This is used with the stdio transport to process incoming messages
 pub fn read_json_message(line string) !protocol.JsonRpcMessage {
 	return protocol.parse_jsonrpc_message(line)

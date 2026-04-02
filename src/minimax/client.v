@@ -21,6 +21,18 @@ pub fn new_client(api_key string, host string) Client {
 	}
 }
 
+// Coding Plan API host (for web_search and understand_image)
+const default_coding_plan_host = 'https://api.minimax.chat'
+
+fn coding_plan_api_client() Client {
+	api_key := os.getenv('MINIMAX_API_KEY')
+	mut host := os.getenv('MINIMAX_API_HOST')
+	if host.len == 0 {
+		host = default_coding_plan_host
+	}
+	return new_client(api_key, host)
+}
+
 pub fn (c Client) get(path string) !json2.Any {
 	url := c.host + path
 	resp := http.fetch(url: url, method: .get, header: c.build_headers())!
@@ -328,14 +340,16 @@ pub fn (c Client) design_voice(req VoiceDesignRequest) !map[string]json2.Any {
 }
 
 pub fn (c Client) search(req SearchRequest) !map[string]json2.Any {
+	client := coding_plan_api_client()
 	mut body := map[string]json2.Any{}
 	body['q'] = req.query
-	return c.post(endpoint_search, body)!.as_map()
+	return client.post(endpoint_search, body)!.as_map()
 }
 
 pub fn (c Client) vlm(req VLMRequest) !map[string]json2.Any {
+	client := coding_plan_api_client()
 	mut body := map[string]json2.Any{}
 	body['prompt'] = req.prompt
 	body['image_url'] = req.image_url
-	return c.post(endpoint_vlm, body)!.as_map()
+	return client.post(endpoint_vlm, body)!.as_map()
 }

@@ -188,7 +188,7 @@ pub struct SearchRequest {
 
 pub struct SearchResult {
 mut:
-	organic        []SearchOrganic
+	organic          []SearchOrganic
 	related_searches []SearchRelated
 }
 

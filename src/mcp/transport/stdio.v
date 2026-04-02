@@ -86,11 +86,9 @@ pub fn (mut t StdioTransport) start(handler StdioTransportMessageHandler) ! {
 		mut got_newline := false
 		for {
 			mut buf := []u8{len: 1}
-			n := os.stdin().read(mut buf) or {
-				return // EOF or error
-			}
+			n := os.stdin().read(mut buf) or { return }
 			if n == 0 {
-				return // EOF
+				return
 			}
 			if buf[0] == `\n` {
 				got_newline = true

@@ -56,7 +56,7 @@ fn main() {
 	match config.mode {
 		'stdio' {
 			eprintln('Starting in stdio mode...')
-			server.server.start()
+			server.server.start()!
 		}
 		'sse' {
 			eprintln('Starting in SSE mode on port ${config.port}...')

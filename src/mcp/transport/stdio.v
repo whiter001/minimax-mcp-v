@@ -79,34 +79,53 @@ pub fn new_stdio_transport() StdioTransport {
 
 // start starts the stdio transport and processes messages
 // This function blocks until the transport is closed
-pub fn (mut t StdioTransport) start(handler StdioTransportMessageHandler) {
+pub fn (mut t StdioTransport) start(handler StdioTransportMessageHandler) ! {
 	for {
-		line := read_stdin_message(mut t.reader) or {
-			// EOF or error - exit gracefully
-			break
+		// Use simple line-based reading that works with pipe redirection
+		mut line := []u8{}
+		mut got_newline := false
+		for {
+			mut buf := []u8{len: 1}
+			n := os.stdin().read(mut buf) or {
+				return // EOF or error
+			}
+			if n == 0 {
+				return // EOF
+			}
+			if buf[0] == `\n` {
+				got_newline = true
+				break
+			}
+			if buf[0] != `\r` {
+				line << buf[0]
+			}
 		}
-
-		if line.trim_space().len == 0 {
+		if !got_newline {
 			continue
 		}
-
-		handler(line)
+		line_str := line.bytestr().trim_space()
+		if line_str.len == 0 {
+			continue
+		}
+		handler(line_str)
 	}
 }
 
 // send sends a JSON-RPC message to stdout
 pub fn (mut t StdioTransport) send(resp protocol.JsonRpcResponse) ! {
 	raw := protocol.response_to_json(resp)!
-	frame := 'Content-Length: ${raw.bytes().len}\r\n\r\n${raw}'
-	t.writer.write(frame.bytes())!
+	// Use JSON line format (newline-delimited) for compatibility with most MCP clients
+	t.writer.write(raw.bytes())!
+	t.writer.write([u8(10)])!
 	t.writer.flush()!
 }
 
 // send_notification sends a JSON-RPC notification to stdout
 pub fn (mut t StdioTransport) send_notification(notification protocol.JsonRpcNotification) ! {
 	raw := protocol.notification_to_json(notification)!
-	frame := 'Content-Length: ${raw.bytes().len}\r\n\r\n${raw}'
-	t.writer.write(frame.bytes())!
+	// Use JSON line format (newline-delimited) for compatibility with most MCP clients
+	t.writer.write(raw.bytes())!
+	t.writer.write([u8(10)])!
 	t.writer.flush()!
 }
 

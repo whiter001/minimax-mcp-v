@@ -278,7 +278,7 @@ fn (s &McpServer) handle_ping(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
 	return proto.build_response(req.id, map[string]json2.Any{})
 }
 
-pub fn (mut s McpServer) start() {
+pub fn (mut s McpServer) start() ! {
 	mut tr := transport.new_stdio_transport()
 	handler := fn [mut s, mut tr] (msg string) {
 		result := s.handle_message(msg) or { return }
@@ -287,5 +287,5 @@ pub fn (mut s McpServer) start() {
 			proto.JsonRpcNotification {}
 		}
 	}
-	tr.start(handler)
+	tr.start(handler)!
 }

@@ -39,3 +39,7 @@ minimax-mcp-v
 *.bak
 tmp/
 temp/
+
+
+!tests/a.jpeg
+!tests/b.jpg

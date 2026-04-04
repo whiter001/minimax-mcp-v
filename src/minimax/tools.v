@@ -152,6 +152,18 @@ fn extract_string_field(obj map[string]json2.Any, key string) ?string {
 	return value.str()
 }
 
+fn extract_first_non_empty_string_field(obj map[string]json2.Any, keys []string) ?string {
+	for key in keys {
+		if value := obj[key] {
+			text := value.str().trim_space()
+			if text.len > 0 {
+				return text
+			}
+		}
+	}
+	return none
+}
+
 fn required_string_field(obj map[string]json2.Any, key string, message string) !string {
 	value := obj[key] or { return error(message) }
 	text := value.str().trim_space()
@@ -164,6 +176,160 @@ fn required_string_field(obj map[string]json2.Any, key string, message string) !
 fn object_schema() json2.Any {
 	mut schema := map[string]json2.Any{}
 	schema['type'] = 'object'
+	return schema
+}
+
+fn string_schema(description string) json2.Any {
+	mut schema := map[string]json2.Any{}
+	schema['type'] = 'string'
+	if description.len > 0 {
+		schema['description'] = description
+	}
+	return schema
+}
+
+fn integer_schema(description string) json2.Any {
+	mut schema := map[string]json2.Any{}
+	schema['type'] = 'integer'
+	if description.len > 0 {
+		schema['description'] = description
+	}
+	return schema
+}
+
+fn number_schema(description string) json2.Any {
+	mut schema := map[string]json2.Any{}
+	schema['type'] = 'number'
+	if description.len > 0 {
+		schema['description'] = description
+	}
+	return schema
+}
+
+fn boolean_schema(description string) json2.Any {
+	mut schema := map[string]json2.Any{}
+	schema['type'] = 'boolean'
+	if description.len > 0 {
+		schema['description'] = description
+	}
+	return schema
+}
+
+fn object_schema_with(properties map[string]json2.Any, required []string) json2.Any {
+	mut schema := map[string]json2.Any{}
+	schema['type'] = 'object'
+	schema['properties'] = properties
+	schema['additionalProperties'] = true
+	if required.len > 0 {
+		mut required_fields := []json2.Any{}
+		for field in required {
+			required_fields << field
+		}
+		schema['required'] = required_fields
+	}
+	return schema
+}
+
+fn text_to_audio_schema() json2.Any {
+	return object_schema_with({
+		'text':             string_schema('Text to synthesize into audio.')
+		'voice_id':         string_schema('Voice ID to use for synthesis.')
+		'model':            string_schema('MiniMax speech model name.')
+		'speed':            number_schema('Speech speed multiplier.')
+		'vol':              number_schema('Output volume multiplier.')
+		'pitch':            integer_schema('Pitch adjustment.')
+		'emotion':          string_schema('Voice emotion preset.')
+		'sample_rate':      integer_schema('Output sample rate in Hz.')
+		'bitrate':          integer_schema('Output bitrate in bps.')
+		'channel':          integer_schema('Output channel count.')
+		'format':           string_schema('Output audio format, for example mp3.')
+		'language_boost':   string_schema('Language boost mode.')
+		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+	}, ['text'])
+}
+
+fn list_voices_schema() json2.Any {
+	return object_schema_with({
+		'voice_type': string_schema('Voice type filter. Defaults to all.')
+	}, []string{})
+}
+
+fn voice_clone_schema() json2.Any {
+	return object_schema_with({
+		'voice_id':         string_schema('Target cloned voice ID.')
+		'file':             string_schema('Local audio file path or remote URL.')
+		'text':             string_schema('Reference transcript for the uploaded audio.')
+		'is_url':           boolean_schema('Whether the file field is a remote URL.')
+		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+	}, ['voice_id', 'file', 'text'])
+}
+
+fn play_audio_schema() json2.Any {
+	return object_schema_with({
+		'input_file_path': string_schema('Local audio file path or remote URL to play.')
+		'is_url':          boolean_schema('Whether input_file_path is a remote URL.')
+	}, ['input_file_path'])
+}
+
+fn generate_video_schema() json2.Any {
+	return object_schema_with({
+		'prompt':            string_schema('Text prompt used to generate the video.')
+		'model':             string_schema('Video generation model.')
+		'async_mode':        boolean_schema('Return a task ID without polling for completion.')
+		'first_frame_image': string_schema('Optional first frame image URL or local path.')
+		'resolution':        string_schema('Optional output resolution preset.')
+		'duration':          integer_schema('Optional duration in seconds.')
+		'output_directory':  string_schema('Optional local output directory when resource mode is local.')
+	}, ['prompt'])
+}
+
+fn query_video_generation_schema() json2.Any {
+	return object_schema_with({
+		'task_id':          string_schema('Video generation task ID to query.')
+		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+	}, ['task_id'])
+}
+
+fn text_to_image_schema() json2.Any {
+	return object_schema_with({
+		'prompt':           string_schema('Text prompt used to generate images.')
+		'model':            string_schema('Image generation model.')
+		'aspect_ratio':     string_schema('Target image aspect ratio.')
+		'n':                integer_schema('Number of images to generate.')
+		'prompt_optimizer': boolean_schema('Whether to enable prompt optimization.')
+		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+	}, ['prompt'])
+}
+
+fn music_generation_schema() json2.Any {
+	return object_schema_with({
+		'prompt':           string_schema('Text prompt describing the desired music.')
+		'lyrics':           string_schema('Lyrics to render into the generated music.')
+		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+	}, ['prompt', 'lyrics'])
+}
+
+fn voice_design_schema() json2.Any {
+	return object_schema_with({
+		'prompt':           string_schema('Description of the desired voice.')
+		'preview_text':     string_schema('Preview text to synthesize with the designed voice.')
+		'voice_id':         string_schema('Optional existing voice ID to refine.')
+		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+	}, ['prompt', 'preview_text'])
+}
+
+fn web_search_schema() json2.Any {
+	return object_schema_with({
+		'query': string_schema('Search query text.')
+	}, ['query'])
+}
+
+fn understand_image_schema() json2.Any {
+	mut schema := object_schema_with({
+		'prompt':       string_schema('Question or instruction about the image.')
+		'image_source': string_schema('Image URL, local file path, or data URL.')
+	}, ['prompt', 'image_source']).as_map()
+	schema['additionalProperties'] = false
 	return schema
 }
 
@@ -200,67 +366,67 @@ pub fn tool_definitions() []mcp.Tool {
 		mcp.Tool{
 			name:         'text_to_audio'
 			description:  'Convert text to audio and save the output audio file.'
-			input_schema: object_schema()
+			input_schema: text_to_audio_schema()
 			handler:      text_to_audio_handler
 		},
 		mcp.Tool{
 			name:         'list_voices'
 			description:  'List available voices.'
-			input_schema: object_schema()
+			input_schema: list_voices_schema()
 			handler:      list_voices_handler
 		},
 		mcp.Tool{
 			name:         'voice_clone'
 			description:  'Clone a voice from a file.'
-			input_schema: object_schema()
+			input_schema: voice_clone_schema()
 			handler:      voice_clone_handler
 		},
 		mcp.Tool{
 			name:         'play_audio'
 			description:  'Play an audio file.'
-			input_schema: object_schema()
+			input_schema: play_audio_schema()
 			handler:      play_audio_handler
 		},
 		mcp.Tool{
 			name:         'generate_video'
 			description:  'Generate a video from a text prompt.'
-			input_schema: object_schema()
+			input_schema: generate_video_schema()
 			handler:      generate_video_handler
 		},
 		mcp.Tool{
 			name:         'query_video_generation'
 			description:  'Query the status of a video generation task.'
-			input_schema: object_schema()
+			input_schema: query_video_generation_schema()
 			handler:      query_video_handler
 		},
 		mcp.Tool{
 			name:         'text_to_image'
 			description:  'Generate images from a text prompt.'
-			input_schema: object_schema()
+			input_schema: text_to_image_schema()
 			handler:      text_to_image_handler
 		},
 		mcp.Tool{
 			name:         'music_generation'
 			description:  'Generate music from a text prompt.'
-			input_schema: object_schema()
+			input_schema: music_generation_schema()
 			handler:      music_generation_handler
 		},
 		mcp.Tool{
 			name:         'voice_design'
 			description:  'Generate a voice from description prompts.'
-			input_schema: object_schema()
+			input_schema: voice_design_schema()
 			handler:      voice_design_handler
 		},
 		mcp.Tool{
 			name:         'web_search'
 			description:  'Search the web and get structured results including titles, links, snippets, and related searches.'
-			input_schema: object_schema()
+			input_schema: web_search_schema()
 			handler:      web_search_handler
 		},
 		mcp.Tool{
 			name:         'understand_image'
 			description:  'Analyze images from URLs or local files, supporting JPEG, PNG, and WebP formats.'
-			input_schema: object_schema()
+			input_schema: understand_image_schema()
 			handler:      understand_image_handler
 		},
 	]
@@ -838,7 +1004,9 @@ fn understand_image_handler(name string, arguments ?json2.Any) !mcp.CallToolResu
 	obj := args.as_map()
 
 	prompt := required_string_field(obj, 'prompt', 'Prompt is required')!
-	image_source := required_string_field(obj, 'image_source', 'Image source is required')!
+	image_source := extract_first_non_empty_string_field(obj, ['image_source', 'image_url']) or {
+		return error('Image source is required')
+	}
 
 	processed_image_url := process_image_url(image_source)!
 

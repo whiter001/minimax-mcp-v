@@ -80,3 +80,33 @@ fn test_coding_plan_api_client_uses_main_default_host_when_env_missing() {
 	assert client.api_key == 'test-key'
 	assert client.host == 'https://api.minimaxi.com'
 }
+
+fn test_image_format_from_path_recognizes_jpeg_variants() {
+	assert image_format_from_path('tests/a.jpeg') == 'jpeg'
+	assert image_format_from_path('tests/b.jpg') == 'jpeg'
+	assert image_format_from_path('tests/c.PNG') == 'png'
+	assert image_format_from_path('tests/d.webp') == 'webp'
+}
+
+fn test_process_image_url_supports_repo_jpeg_fixtures() {
+	repo_root := os.dir(os.dir(os.dir(@FILE)))
+	jpeg_path := os.join_path(repo_root, 'tests', 'a.jpeg')
+	jpg_path := os.join_path(repo_root, 'tests', 'b.jpg')
+
+	jpeg_data_url := process_image_url(jpeg_path) or { panic(err) }
+	jpg_data_url := process_image_url(jpg_path) or { panic(err) }
+
+	assert jpeg_data_url.starts_with('data:image/jpeg;base64,')
+	assert jpg_data_url.starts_with('data:image/jpeg;base64,')
+	assert jpeg_data_url.len > 'data:image/jpeg;base64,'.len
+	assert jpg_data_url.len > 'data:image/jpeg;base64,'.len
+}
+
+fn test_process_image_url_strips_at_prefix_for_local_jpeg_fixture() {
+	repo_root := os.dir(os.dir(os.dir(@FILE)))
+	jpeg_path := os.join_path(repo_root, 'tests', 'a.jpeg')
+
+	data_url := process_image_url('@${jpeg_path}') or { panic(err) }
+
+	assert data_url.starts_with('data:image/jpeg;base64,')
+}

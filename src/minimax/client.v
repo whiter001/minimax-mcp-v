@@ -129,6 +129,34 @@ fn (c Client) response_trace_id(resp http.Response) string {
 	return resp.header.get_custom('Trace-Id', exact: false) or { '' }
 }
 
+fn image_format_from_content_type(content_type string) string {
+	content_type_lower := content_type.to_lower()
+	if content_type_lower.contains('png') {
+		return 'png'
+	}
+	if content_type_lower.contains('webp') {
+		return 'webp'
+	}
+	if content_type_lower.contains('jpg') || content_type_lower.contains('jpeg') {
+		return 'jpeg'
+	}
+	return 'jpeg'
+}
+
+fn image_format_from_path(path string) string {
+	path_lower := path.to_lower()
+	if path_lower.ends_with('.png') {
+		return 'png'
+	}
+	if path_lower.ends_with('.webp') {
+		return 'webp'
+	}
+	if path_lower.ends_with('.jpg') || path_lower.ends_with('.jpeg') {
+		return 'jpeg'
+	}
+	return 'jpeg'
+}
+
 // process_image_url converts image URL or local path to base64 data URL
 fn process_image_url(image_url string) !string {
 	mut img_url := image_url
@@ -152,13 +180,7 @@ fn process_image_url(image_url string) !string {
 
 		// Detect image format from content-type header
 		content_type := resp.header.get(.content_type) or { 'image/jpeg' }
-		image_format := if content_type.contains('png') {
-			'png'
-		} else if content_type.contains('webp') {
-			'webp'
-		} else {
-			'jpeg'
-		}
+		image_format := image_format_from_content_type(content_type)
 
 		base64_data := base64.encode(resp.body.bytes())
 		return 'data:image/${image_format};base64,${base64_data}'
@@ -172,13 +194,7 @@ fn process_image_url(image_url string) !string {
 	image_data := os.read_file(img_url)!
 
 	// Detect image format from file extension
-	image_format := if img_url.to_lower().ends_with('.png') {
-		'png'
-	} else if img_url.to_lower().ends_with('.webp') {
-		'webp'
-	} else {
-		'jpeg'
-	}
+	image_format := image_format_from_path(img_url)
 
 	base64_data := base64.encode(image_data.bytes())
 	return 'data:image/${image_format};base64,${base64_data}'

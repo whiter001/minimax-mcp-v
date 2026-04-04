@@ -10,8 +10,8 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 | `MINIMAX_API_HOST` | 否 | `https://api.minimaxi.com` | API 主机地址 |
 | `MINIMAX_MCP_BASE_PATH` | 否 | `~/Desktop` | 文件输出目录 |
 | `MINIMAX_API_RESOURCE_MODE` | 否 | `url` | 资源模式：`url` 返回 URL，`local` 保存本地文件 |
-| `MINIMAX_MCP_MODE` | 否 | `stdio` | 运行模式：`stdio` 或 `sse` |
-| `MINIMAX_MCP_PORT` | 否 | `33000` | SSE 模式端口号 |
+| `MINIMAX_MCP_MODE` | 否 | `stdio` | 运行模式；当前仅 `stdio` 已实现，`sse` 仍未接线 |
+| `MINIMAX_MCP_PORT` | 否 | `33000` | 预留给 SSE 模式的端口号 |
 
 ## 工具列表
 
@@ -66,3 +66,13 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 - `v -d mbedtls_client_read_timeout_ms=100000 src/main.v`
 
 请在仓库根目录下运行它。
+
+## 当前协议能力
+
+默认实例只声明并支持 `tools` capability。
+
+- `resources`
+- `roots`
+- `sampling`
+
+这些能力需要在代码里显式注册对应 handler 后才会对客户端声明；当前主程序没有启用它们。

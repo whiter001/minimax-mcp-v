@@ -60,14 +60,17 @@ pub fn (mut s McpServer) register_tool(tool Tool) {
 
 pub fn (mut s McpServer) set_resource_handler(handler ResourceHandler) {
 	s.resource_handler = handler
+	s.capabilities = proto.enable_resources(s.capabilities)
 }
 
 pub fn (mut s McpServer) set_sampling_handler(handler SamplingHandler) {
 	s.sampling_handler = handler
+	s.capabilities = proto.enable_sampling(s.capabilities)
 }
 
 pub fn (mut s McpServer) set_roots_handler(handler RootsHandler) {
 	s.roots_handler = handler
+	s.capabilities = proto.enable_roots(s.capabilities)
 }
 
 pub fn (mut s McpServer) handle_message(raw_msg string) !proto.JsonRpcResponseOrNotification {

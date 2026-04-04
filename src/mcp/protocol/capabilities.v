@@ -10,10 +10,37 @@ import x.json2
 pub fn default_server_capabilities() ServerCapabilities {
 	return ServerCapabilities{
 		tools:     ToolsCapability{}
+		resources: none
+		sampling:  none
+		roots:     none
+	}
+}
+
+pub fn enable_resources(capabilities ServerCapabilities) ServerCapabilities {
+	return ServerCapabilities{
+		tools:     capabilities.tools
 		resources: ResourcesCapability{
 			subscribe: true
 		}
+		sampling:  capabilities.sampling
+		roots:     capabilities.roots
+	}
+}
+
+pub fn enable_sampling(capabilities ServerCapabilities) ServerCapabilities {
+	return ServerCapabilities{
+		tools:     capabilities.tools
+		resources: capabilities.resources
 		sampling:  SamplingCapability{}
+		roots:     capabilities.roots
+	}
+}
+
+pub fn enable_roots(capabilities ServerCapabilities) ServerCapabilities {
+	return ServerCapabilities{
+		tools:     capabilities.tools
+		resources: capabilities.resources
+		sampling:  capabilities.sampling
 		roots:     RootsCapability{
 			list: true
 		}

@@ -65,16 +65,13 @@ fn test_jsonrpc_notification_round_trip() {
 	}
 }
 
-fn test_default_server_capabilities_have_expected_sections() {
+fn test_default_server_capabilities_match_default_server_surface() {
 	caps := protocol.default_server_capabilities()
 	json_caps := caps.to_json().as_map()
 
 	assert 'tools' in json_caps
-	assert 'resources' in json_caps
-	assert 'sampling' in json_caps
-	assert 'roots' in json_caps
 	assert caps.has_tools()
-	assert caps.has_resources()
-	assert caps.has_sampling()
-	assert caps.has_roots()
+	assert !caps.has_resources()
+	assert !caps.has_sampling()
+	assert !caps.has_roots()
 }

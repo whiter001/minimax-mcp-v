@@ -441,6 +441,7 @@ fn text_to_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 	obj := args.as_map()
 
 	text := required_string_field(obj, 'text', 'text is required')!
+	resource_mode := current_resource_mode()
 	voice_id := get_string_field(obj, 'voice_id', default_voice_id)
 	model := get_string_field(obj, 'model', default_speech_model)
 	speed := get_f64_field(obj, 'speed', default_speed)
@@ -471,6 +472,7 @@ fn text_to_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 			channel:     channel
 		}
 		language_boost: language_boost
+		output_format:  if resource_mode == 'url' { 'url' } else { 'hex' }
 	}
 
 	result := api_client().text_to_audio(req)!
@@ -479,7 +481,7 @@ fn text_to_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 	audio := audio_data['audio'] or { return error('No audio in response') }
 	audio_text := audio.str()
 
-	if current_resource_mode() == 'url' {
+	if resource_mode == 'url' {
 		return mcp.CallToolResult{
 			content:  [
 				mcp.Content{

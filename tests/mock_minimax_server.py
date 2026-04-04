@@ -87,7 +87,14 @@ class Handler(BaseHTTPRequestHandler):
         payload, raw_body = self._read_body()
 
         if parsed.path == '/v1/t2a_v2':
-            self._send_json({'base_resp': {'status_code': 0}, 'data': {'audio': f'{self.base_url}/assets/audio.mp3'}})
+            output_format = str(payload.get('output_format', 'hex'))
+            audio_payload = f'{self.base_url}/assets/audio.mp3' if output_format == 'url' else b'mock-audio'.hex()
+            self._send_json(
+                {
+                    'base_resp': {'status_code': 0},
+                    'data': {'audio': audio_payload, 'status': 2},
+                }
+            )
             return
         if parsed.path == '/v1/get_voice':
             self._send_json(

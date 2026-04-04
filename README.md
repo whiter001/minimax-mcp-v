@@ -17,7 +17,7 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 
 | 工具名称                 | 功能描述                                                 |
 | ------------------------ | -------------------------------------------------------- |
-| `text_to_audio`          | 将文本转换为音频并保存。支持语速、音调、音量、情感等参数 |
+| `text_to_audio`          | 将文本转换为音频并保存。当前支持基础 voice/audio 参数    |
 | `list_voices`            | 列出所有可用的系统语音和克隆语音                         |
 | `voice_clone`            | 从音频文件克隆语音                                       |
 | `play_audio`             | 播放本地或远程音频文件                                   |
@@ -28,6 +28,11 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 | `voice_design`           | 从描述提示生成自定义语音                                 |
 | `web_search`             | 搜索网络，返回结构化结果                                 |
 | `understand_image`       | 分析图像内容，支持 URL 或本地文件（JPEG/PNG/WebP）       |
+
+## API 文档
+
+- `docs/speech-t2a-http.md`：MiniMax 同步语音合成 HTTP 官方文档整理，以及当前仓库实现的字段覆盖情况
+- `docs/README.md`：`docs/` 目录索引
 
 ## 使用方法
 
@@ -71,11 +76,11 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 
 默认实例只声明并支持 `tools` capability。
 
+以下能力需要在代码里显式注册对应 handler 后才会对客户端声明，当前主程序**没有**启用它们：
+
 - `resources`
 - `roots`
 - `sampling`
-
-这些能力需要在代码里显式注册对应 handler 后才会对客户端声明；当前主程序没有启用它们。
 
 ## 本地 stdio smoke
 

@@ -93,6 +93,31 @@ fn test_tools_call_success_paths_with_mock_upstream() {
 	assert query_text == 'Success. Video URL: ${upstream.base_url}/assets/video.mp4'
 }
 
+fn test_text_to_audio_saves_local_file_with_hex_response() {
+	mut upstream := start_mock_upstream()
+	defer {
+		upstream.close()
+	}
+
+	snapshot := save_minimax_env()
+	defer {
+		restore_minimax_env(snapshot)
+	}
+	configure_minimax_env(upstream.base_url)
+	os.setenv('MINIMAX_API_RESOURCE_MODE', 'local', true)
+
+	output_dir := os.join_path(os.temp_dir(), 'minimax_t2a_local_${os.getpid()}')
+	os.mkdir_all(output_dir) or { panic(err) }
+	defer {
+		os.rmdir_all(output_dir) or {}
+	}
+
+	mut server := new_test_server()
+	audio_text := call_tool_text(mut server, 12, 'text_to_audio', '{"text":"hello local","output_directory":"${output_dir}"}')
+	assert audio_text == 'Success. Audio saved as: ${output_dir}/t2a_hello_local.mp3. Voice used: female-shaonv'
+	assert os.read_file(os.join_path(output_dir, 't2a_hello_local.mp3')) or { panic(err) } == 'mock-audio'
+}
+
 fn test_tools_call_surfaces_upstream_business_error_with_trace_id() {
 	mut upstream := start_mock_upstream()
 	defer {

@@ -8,7 +8,7 @@ fn test_jsonrpc_request_round_trip() {
 	params['name'] = 'tool'
 
 	req := protocol.JsonRpcRequest{
-		id:     7
+		id:     json2.Any(7)
 		method: 'tools/list'
 		params: params
 	}
@@ -18,7 +18,7 @@ fn test_jsonrpc_request_round_trip() {
 
 	match parsed {
 		protocol.JsonRpcRequest {
-			assert parsed.id == 7
+			assert parsed.id.int() == 7
 			assert parsed.method == 'tools/list'
 			assert parsed.params != none
 			assert parsed.params?.as_map()['name'].str() == 'tool'
@@ -32,14 +32,14 @@ fn test_jsonrpc_request_round_trip() {
 fn test_jsonrpc_response_round_trip() {
 	mut result := map[string]json2.Any{}
 	result['ok'] = true
-	resp := protocol.build_response(2, result)
+	resp := protocol.build_response(json2.Any(2), result)
 
 	raw := protocol.response_to_json(resp)!
 	parsed := protocol.parse_jsonrpc_message(raw)!
 
 	match parsed {
 		protocol.JsonRpcResponse {
-			assert parsed.id == 2
+			assert parsed.id.int() == 2
 			assert parsed.result != none
 			assert parsed.error == none
 		}
@@ -57,11 +57,7 @@ fn test_jsonrpc_notification_round_trip() {
 	match parsed {
 		protocol.JsonRpcNotification {
 			assert parsed.method == 'initialized'
-			if params := parsed.params {
-				assert params.as_array().len == 0
-			} else {
-				assert false
-			}
+			assert parsed.params == none
 		}
 		else {
 			assert false

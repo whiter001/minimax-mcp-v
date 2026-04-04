@@ -25,6 +25,7 @@ coverage/
 *.out
 *.test
 *.prof
+minimax-mcp-v
 
 # Generated media / local artifacts
 *.mp3

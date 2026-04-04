@@ -9,7 +9,7 @@ import x.json2
 pub struct JsonRpcRequest {
 pub:
 	jsonrpc string = '2.0'
-	id      int
+	id      json2.Any
 	method  string
 	params  ?json2.Any
 }
@@ -17,7 +17,7 @@ pub:
 pub struct JsonRpcResponse {
 pub:
 	jsonrpc string = '2.0'
-	id      int
+	id      json2.Any
 	result  ?json2.Any
 	error   ?JsonRpcError
 }

@@ -21,14 +21,11 @@ pub fn new_client(api_key string, host string) Client {
 	}
 }
 
-// Coding Plan API host (for web_search and understand_image)
-const default_coding_plan_host = 'https://api.minimax.chat'
-
 fn coding_plan_api_client() Client {
 	api_key := os.getenv('MINIMAX_API_KEY')
 	mut host := os.getenv('MINIMAX_API_HOST')
 	if host.len == 0 {
-		host = default_coding_plan_host
+		host = default_api_host
 	}
 	return new_client(api_key, host)
 }
@@ -229,8 +226,8 @@ pub fn (c Client) list_voices(voice_type string) !VoiceList {
 		for v in system_voices.as_array() {
 			voice_obj := v.as_map()
 			voice_list.system_voice << Voice{
-				voice_id:   voice_obj['voice_id'].str()
-				voice_name: voice_obj['voice_name'].str()
+				voice_id:   required_string_field(voice_obj, 'voice_id', 'Missing voice_id in response')!
+				voice_name: required_string_field(voice_obj, 'voice_name', 'Missing voice_name in response')!
 			}
 		}
 	}
@@ -239,8 +236,8 @@ pub fn (c Client) list_voices(voice_type string) !VoiceList {
 		for v in cloning_voices.as_array() {
 			voice_obj := v.as_map()
 			voice_list.voice_cloning << Voice{
-				voice_id:   voice_obj['voice_id'].str()
-				voice_name: voice_obj['voice_name'].str()
+				voice_id:   required_string_field(voice_obj, 'voice_id', 'Missing voice_id in response')!
+				voice_name: required_string_field(voice_obj, 'voice_name', 'Missing voice_name in response')!
 			}
 		}
 	}

@@ -6,11 +6,15 @@ import os
 import x.json2
 import time
 
-// init_client keeps the existing startup hook, but the handlers now read
-// configuration directly from the environment on demand.
+// init_client synchronizes startup configuration into the shared environment
+// variables used by the API client helpers.
 pub fn init_client(api_key string, host string) {
-	_ = api_key
-	_ = host
+	if api_key.len > 0 {
+		os.setenv('MINIMAX_API_KEY', api_key, true)
+	}
+	if host.len > 0 {
+		os.setenv('MINIMAX_API_HOST', host, true)
+	}
 }
 
 const default_api_host = 'https://api.minimaxi.com'
@@ -144,10 +148,17 @@ fn build_output_file_path(prefix string, seed string, extension string) string {
 }
 
 fn extract_string_field(obj map[string]json2.Any, key string) ?string {
-	if key in obj {
-		return obj[key].str()
+	value := obj[key] or { return none }
+	return value.str()
+}
+
+fn required_string_field(obj map[string]json2.Any, key string, message string) !string {
+	value := obj[key] or { return error(message) }
+	text := value.str().trim_space()
+	if text.len == 0 {
+		return error(message)
 	}
-	return none
+	return text
 }
 
 fn object_schema() json2.Any {
@@ -157,31 +168,23 @@ fn object_schema() json2.Any {
 }
 
 fn get_string_field(obj map[string]json2.Any, key string, default_value string) string {
-	if key in obj {
-		return obj[key].str()
-	}
-	return default_value
+	value := obj[key] or { return default_value }
+	return value.str()
 }
 
 fn get_int_field(obj map[string]json2.Any, key string, default_value int) int {
-	if key in obj {
-		return obj[key].int()
-	}
-	return default_value
+	value := obj[key] or { return default_value }
+	return value.int()
 }
 
 fn get_bool_field(obj map[string]json2.Any, key string, default_value bool) bool {
-	if key in obj {
-		return obj[key].bool()
-	}
-	return default_value
+	value := obj[key] or { return default_value }
+	return value.bool()
 }
 
 fn get_f64_field(obj map[string]json2.Any, key string, default_value f64) f64 {
-	if key in obj {
-		return obj[key].f64()
-	}
-	return default_value
+	value := obj[key] or { return default_value }
+	return value.f64()
 }
 
 fn video_retry_interval() time.Duration {
@@ -271,7 +274,7 @@ fn text_to_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 	args := arguments or { return error('Missing arguments') }
 	obj := args.as_map()
 
-	text := obj['text'] or { return error('Missing text parameter') }
+	text := required_string_field(obj, 'text', 'text is required')!
 	voice_id := get_string_field(obj, 'voice_id', default_voice_id)
 	model := get_string_field(obj, 'model', default_speech_model)
 	speed := get_f64_field(obj, 'speed', default_speed)
@@ -287,7 +290,7 @@ fn text_to_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 
 	req := TTSRequest{
 		model:          model
-		text:           text.str()
+		text:           text
 		voice_setting:  VoiceSetting{
 			voice_id: voice_id
 			speed:    speed
@@ -323,7 +326,7 @@ fn text_to_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 	}
 
 	output_dir := resolve_output_dir(output_directory)
-	output_file := build_output_file_path('t2a', text.str(), format)
+	output_file := build_output_file_path('t2a', text, format)
 	output_path := output_dir + '/' + output_file
 	save_hex_payload(output_path, audio_text)!
 
@@ -373,13 +376,13 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	args := arguments or { return error('Missing arguments') }
 	obj := args.as_map()
 
-	voice_id := obj['voice_id'] or { return error('Missing voice_id') }
-	file := obj['file'] or { return error('Missing file') }
-	text := obj['text'] or { return error('Missing text') }
+	voice_id := required_string_field(obj, 'voice_id', 'voice_id is required')!
+	file_path := required_string_field(obj, 'file', 'file is required')!
+	text := required_string_field(obj, 'text', 'text is required')!
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
-	file_path := file.str()
 
-	file_data := if 'is_url' in obj && obj['is_url'].bool() {
+	is_url := if is_url_val := obj['is_url'] { is_url_val.bool() } else { false }
+	file_data := if is_url {
 		download_url(file_path)!
 	} else {
 		os.read_file(file_path)!
@@ -391,8 +394,8 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 
 	clone_req := VoiceCloneRequest{
 		file_id:  file_id.str()
-		voice_id: voice_id.str()
-		text:     text.str()
+		voice_id: voice_id
+		text:     text
 	}
 
 	clone_result := api_client().voice_clone(clone_req)!
@@ -402,7 +405,7 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 				content:  [
 					mcp.Content{
 						@type: 'text'
-						text:  'Voice cloned successfully. Voice ID: ${voice_id.str()}, demo audio URL: ${demo_audio.str()}'
+						text:  'Voice cloned successfully. Voice ID: ${voice_id}, demo audio URL: ${demo_audio.str()}'
 					},
 				]
 				is_error: false
@@ -410,7 +413,7 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 		}
 
 		output_dir := resolve_output_dir(output_directory)
-		output_file := build_output_file_path('voice_clone', text.str(), 'wav')
+		output_file := build_output_file_path('voice_clone', text, 'wav')
 		output_path := output_dir + '/' + output_file
 		download_to_file(demo_audio.str(), output_path)!
 
@@ -418,7 +421,7 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 			content:  [
 				mcp.Content{
 					@type: 'text'
-					text:  'Voice cloned successfully. Voice ID: ${voice_id.str()}, demo audio saved as: ${output_path}'
+					text:  'Voice cloned successfully. Voice ID: ${voice_id}, demo audio saved as: ${output_path}'
 				},
 			]
 			is_error: false
@@ -429,7 +432,7 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 		content:  [
 			mcp.Content{
 				@type: 'text'
-				text:  'Voice cloned successfully. Voice ID: ${voice_id.str()}'
+				text:  'Voice cloned successfully. Voice ID: ${voice_id}'
 			},
 		]
 		is_error: false
@@ -441,7 +444,8 @@ fn play_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	obj := args.as_map()
 
 	input_file_path := obj['input_file_path'] or { return error('Missing input_file_path') }
-	play_path := if 'is_url' in obj && obj['is_url'].bool() {
+	is_url := if is_url_val := obj['is_url'] { is_url_val.bool() } else { false }
+	play_path := if is_url {
 		temp_path := os.home_dir() + '/.minimax_mcp_play_audio.mp3'
 		download_to_file(input_file_path.str(), temp_path)!
 		temp_path
@@ -449,7 +453,14 @@ fn play_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 		input_file_path.str()
 	}
 
-	os.execute('ffplay -autoexit -nodisp "${play_path}"')
+	// Reject paths with shell metacharacters to prevent command injection
+	if play_path.contains_any('"\';`$(){}|&<>\\\n\r') {
+		return error('Invalid characters in audio file path')
+	}
+	result := os.execute('ffplay -autoexit -nodisp "${play_path}"')
+	if result.exit_code != 0 {
+		return error('ffplay failed: ${result.output.trim_space()}')
+	}
 	return mcp.CallToolResult{
 		content:  [
 			mcp.Content{
@@ -465,17 +476,17 @@ fn generate_video_handler(name string, arguments ?json2.Any) !mcp.CallToolResult
 	args := arguments or { return error('Missing arguments') }
 	obj := args.as_map()
 
-	prompt := obj['prompt'] or { return error('Missing prompt') }
+	prompt := required_string_field(obj, 'prompt', 'prompt is required')!
 	model := get_string_field(obj, 'model', default_t2v_model)
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
 	async_mode := get_bool_field(obj, 'async_mode', false)
 	first_frame_image := extract_string_field(obj, 'first_frame_image')
 	resolution := extract_string_field(obj, 'resolution')
-	duration := if 'duration' in obj { obj['duration'].int() } else { none }
+	duration := if duration_val := obj['duration'] { duration_val.int() } else { none }
 
 	req := VideoGenerationRequest{
 		model:             model
-		prompt:            prompt.str()
+		prompt:            prompt
 		first_frame_image: first_frame_image
 		duration:          duration
 		resolution:        resolution
@@ -692,14 +703,14 @@ fn music_generation_handler(name string, arguments ?json2.Any) !mcp.CallToolResu
 	args := arguments or { return error('Missing arguments') }
 	obj := args.as_map()
 
-	prompt := obj['prompt'] or { return error('Missing prompt') }
-	lyrics := obj['lyrics'] or { return error('Missing lyrics') }
+	prompt := required_string_field(obj, 'prompt', 'prompt is required')!
+	lyrics := required_string_field(obj, 'lyrics', 'lyrics is required')!
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
 
 	req := MusicGenerationRequest{
 		model:         default_music_model
-		prompt:        prompt.str()
-		lyrics:        lyrics.str()
+		prompt:        prompt
+		lyrics:        lyrics
 		audio_setting: MusicSetting{
 			sample_rate: default_sample_rate
 			bitrate:     default_bitrate
@@ -726,7 +737,7 @@ fn music_generation_handler(name string, arguments ?json2.Any) !mcp.CallToolResu
 	}
 
 	output_dir := resolve_output_dir(output_directory)
-	output_file := build_output_file_path('music', prompt.str(), default_format)
+	output_file := build_output_file_path('music', prompt, default_format)
 	output_path := output_dir + '/' + output_file
 	save_hex_payload(output_path, audio_text)!
 
@@ -745,14 +756,14 @@ fn voice_design_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	args := arguments or { return error('Missing arguments') }
 	obj := args.as_map()
 
-	prompt := obj['prompt'] or { return error('Missing prompt') }
-	preview_text := obj['preview_text'] or { return error('Missing preview_text') }
+	prompt := required_string_field(obj, 'prompt', 'prompt is required')!
+	preview_text := required_string_field(obj, 'preview_text', 'preview_text is required')!
 	voice_id := extract_string_field(obj, 'voice_id')
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
 
 	req := VoiceDesignRequest{
-		prompt:       prompt.str()
-		preview_text: preview_text.str()
+		prompt:       prompt
+		preview_text: preview_text
 		voice_id:     voice_id
 	}
 
@@ -773,7 +784,7 @@ fn voice_design_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 		}
 
 		output_dir := resolve_output_dir(output_directory)
-		output_file := build_output_file_path('voice_design', preview_text.str(), 'mp3')
+		output_file := build_output_file_path('voice_design', preview_text, 'mp3')
 		output_path := output_dir + '/' + output_file
 		save_hex_payload(output_path, trial_audio.str())!
 
@@ -803,10 +814,10 @@ fn web_search_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	args := arguments or { return error('Missing arguments') }
 	obj := args.as_map()
 
-	query := obj['query'] or { return error('Missing query') }
+	query := required_string_field(obj, 'query', 'Query is required')!
 
 	req := SearchRequest{
-		query: query.str()
+		query: query
 	}
 
 	result := api_client().search(req)!
@@ -826,13 +837,13 @@ fn understand_image_handler(name string, arguments ?json2.Any) !mcp.CallToolResu
 	args := arguments or { return error('Missing arguments') }
 	obj := args.as_map()
 
-	prompt := obj['prompt'] or { return error('Missing prompt') }
-	image_source := obj['image_source'] or { return error('Missing image_source') }
+	prompt := required_string_field(obj, 'prompt', 'Prompt is required')!
+	image_source := required_string_field(obj, 'image_source', 'Image source is required')!
 
-	processed_image_url := process_image_url(image_source.str())!
+	processed_image_url := process_image_url(image_source)!
 
 	req := VLMRequest{
-		prompt:    prompt.str()
+		prompt:    prompt
 		image_url: processed_image_url
 	}
 

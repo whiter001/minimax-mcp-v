@@ -81,31 +81,11 @@ pub fn new_stdio_transport() StdioTransport {
 // This function blocks until the transport is closed
 pub fn (mut t StdioTransport) start(handler StdioTransportMessageHandler) ! {
 	for {
-		// Use simple line-based reading that works with pipe redirection
-		mut line := []u8{}
-		mut got_newline := false
-		for {
-			mut buf := []u8{len: 1}
-			n := os.stdin().read(mut buf) or { return }
-			if n == 0 {
-				return
-			}
-			if buf[0] == `\n` {
-				got_newline = true
-				break
-			}
-			if buf[0] != `\r` {
-				line << buf[0]
-			}
-		}
-		if !got_newline {
+		msg := read_stdin_message(mut t.reader) or { return }
+		if msg.len == 0 {
 			continue
 		}
-		line_str := line.bytestr().trim_space()
-		if line_str.len == 0 {
-			continue
-		}
-		handler(line_str)
+		handler(msg)
 	}
 }
 

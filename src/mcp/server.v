@@ -25,7 +25,7 @@ pub:
 	name         string
 	description  string
 	input_schema json2.Any
-	handler      ToolHandler
+	handler      ToolHandler = unsafe { nil }
 }
 
 pub type ToolHandler = fn (name string, arguments ?json2.Any) !CallToolResult
@@ -161,7 +161,7 @@ fn (s &McpServer) handle_list_tools(req proto.JsonRpcRequest) !proto.JsonRpcResp
 		mut tool_obj := map[string]json2.Any{}
 		tool_obj['name'] = t.name
 		tool_obj['description'] = t.description
-		tool_obj['input_schema'] = t.input_schema
+		tool_obj['inputSchema'] = t.input_schema
 		tools << tool_obj
 	}
 
@@ -181,7 +181,7 @@ fn (s &McpServer) handle_call_tool(req proto.JsonRpcRequest) !proto.JsonRpcRespo
 		return proto.build_error_response(req.id, proto.jsonrpc_invalid_params, 'Missing tool name')
 	}
 	tool_name := name_val.str()
-	arguments := obj['arguments']
+	arguments := if arguments_val := obj['arguments'] { arguments_val } else { none }
 
 	mut tool := Tool{}
 	mut found := false
@@ -279,13 +279,17 @@ fn (s &McpServer) handle_ping(req proto.JsonRpcRequest) !proto.JsonRpcResponse {
 }
 
 pub fn (mut s McpServer) start() ! {
-	mut tr := transport.new_stdio_transport()
-	handler := fn [mut s, mut tr] (msg string) {
-		result := s.handle_message(msg) or { return }
+	handler := fn [mut s] (msg string) {
+		result := s.handle_message(msg) or {
+			err_resp := proto.build_error_response(json2.Any(json2.Null{}), proto.jsonrpc_parse_error,
+				err.msg())
+			s.transport.send(err_resp) or {}
+			return
+		}
 		match result {
-			proto.JsonRpcResponse { tr.send(result) or { return } }
+			proto.JsonRpcResponse { s.transport.send(result) or {} }
 			proto.JsonRpcNotification {}
 		}
 	}
-	tr.start(handler)!
+	s.transport.start(handler)!
 }

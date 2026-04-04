@@ -22,9 +22,9 @@ pub fn parse_request(value json2.Any) !JsonRpcRequest {
 	method := obj['method'] or { return error('Invalid JSON-RPC request: missing method field') }
 
 	// id is optional for notifications
-	id := if id_val := obj['id'] { id_val.int() } else { 0 }
+	id := if id_val := obj['id'] { id_val } else { json2.Any(0) }
 
-	params := obj['params']
+	params := if params_val := obj['params'] { params_val } else { none }
 
 	return JsonRpcRequest{
 		jsonrpc: '2.0'
@@ -57,7 +57,7 @@ pub fn parse_response(value json2.Any) !JsonRpcResponse {
 		err := parse_jsonrpc_error(err_val)!
 		return JsonRpcResponse{
 			jsonrpc: '2.0'
-			id:      id.int()
+			id:      id
 			error:   err
 		}
 	}
@@ -69,7 +69,7 @@ pub fn parse_response(value json2.Any) !JsonRpcResponse {
 
 	return JsonRpcResponse{
 		jsonrpc: '2.0'
-		id:      id.int()
+		id:      id
 		result:  result
 	}
 }
@@ -86,7 +86,7 @@ fn parse_jsonrpc_error(value json2.Any) !JsonRpcError {
 
 	message := obj['message'] or { return error('Invalid JSON-RPC error: missing message field') }
 
-	data := obj['data']
+	data := if data_val := obj['data'] { data_val } else { none }
 
 	return JsonRpcError{
 		code:    code.int()
@@ -100,7 +100,7 @@ fn parse_jsonrpc_error(value json2.Any) !JsonRpcError {
 // =============================================================================
 
 // build_response creates a successful JSON-RPC response
-pub fn build_response(id int, result json2.Any) JsonRpcResponse {
+pub fn build_response(id json2.Any, result json2.Any) JsonRpcResponse {
 	return JsonRpcResponse{
 		jsonrpc: '2.0'
 		id:      id
@@ -109,7 +109,7 @@ pub fn build_response(id int, result json2.Any) JsonRpcResponse {
 }
 
 // build_error_response creates an error JSON-RPC response
-pub fn build_error_response(id int, code int, message string) JsonRpcResponse {
+pub fn build_error_response(id json2.Any, code int, message string) JsonRpcResponse {
 	return JsonRpcResponse{
 		jsonrpc: '2.0'
 		id:      id
@@ -121,7 +121,7 @@ pub fn build_error_response(id int, code int, message string) JsonRpcResponse {
 }
 
 // build_error_response_with_data creates an error JSON-RPC response with data
-pub fn build_error_response_with_data(id int, code int, message string, data json2.Any) JsonRpcResponse {
+pub fn build_error_response_with_data(id json2.Any, code int, message string, data json2.Any) JsonRpcResponse {
 	return JsonRpcResponse{
 		jsonrpc: '2.0'
 		id:      id
@@ -235,7 +235,7 @@ fn parse_notification(value json2.Any) !JsonRpcNotification {
 		return error('Invalid JSON-RPC notification: missing method field')
 	}
 
-	params := obj['params']
+	params := if params_val := obj['params'] { params_val } else { none }
 
 	return JsonRpcNotification{
 		jsonrpc: '2.0'

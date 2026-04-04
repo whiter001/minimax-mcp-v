@@ -4,11 +4,12 @@ import src.minimax
 
 fn test_tool_definitions_cover_expected_tools() {
 	tools := minimax.tool_definitions()
-	assert tools.len == 9
+	assert tools.len == 11
 
 	names := tools.map(it.name)
 	for expected in ['text_to_audio', 'list_voices', 'voice_clone', 'play_audio', 'generate_video',
-		'query_video_generation', 'text_to_image', 'music_generation', 'voice_design'] {
+		'query_video_generation', 'text_to_image', 'music_generation', 'voice_design', 'web_search',
+		'understand_image'] {
 		assert expected in names
 	}
 }

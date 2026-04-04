@@ -16,42 +16,42 @@
 
 ### 基础字段
 
-| 字段 | 官方说明 |
-| --- | --- |
-| `model` | 必填。可选：`speech-2.8-hd`、`speech-2.8-turbo`、`speech-2.6-hd`、`speech-2.6-turbo`、`speech-02-hd`、`speech-02-turbo`、`speech-01-hd`、`speech-01-turbo` |
-| `text` | 必填。长度需小于 `10000` 字；超过 `3000` 字建议改用流式输出 |
-| `stream` | 可选。是否流式输出，默认 `false` |
-| `stream_options` | 可选。流式输出相关配置 |
+| 字段             | 官方说明                                                                                                                                                   |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model`          | 必填。可选：`speech-2.8-hd`、`speech-2.8-turbo`、`speech-2.6-hd`、`speech-2.6-turbo`、`speech-02-hd`、`speech-02-turbo`、`speech-01-hd`、`speech-01-turbo` |
+| `text`           | 必填。长度需小于 `10000` 字；超过 `3000` 字建议改用流式输出                                                                                                |
+| `stream`         | 可选。是否流式输出，默认 `false`                                                                                                                           |
+| `stream_options` | 可选。流式输出相关配置                                                                                                                                     |
 
 ### `voice_setting`
 
-| 字段 | 官方说明 |
-| --- | --- |
-| `voice_id` | 音色 ID |
-| `speed` | 语速 |
-| `vol` | 音量 |
-| `pitch` | 音调 |
-| `emotion` | 情感 |
+| 字段       | 官方说明 |
+| ---------- | -------- |
+| `voice_id` | 音色 ID  |
+| `speed`    | 语速     |
+| `vol`      | 音量     |
+| `pitch`    | 音调     |
+| `emotion`  | 情感     |
 
 ### `audio_setting`
 
-| 字段 | 官方说明 |
-| --- | --- |
-| `sample_rate` | 采样率 |
-| `bitrate` | 码率 |
-| `format` | 音频格式。非流式支持 `mp3`、`wav`、`flac`；流式仅支持 `mp3` |
-| `channel` | 声道数 |
+| 字段          | 官方说明                                                    |
+| ------------- | ----------------------------------------------------------- |
+| `sample_rate` | 采样率                                                      |
+| `bitrate`     | 码率                                                        |
+| `format`      | 音频格式。非流式支持 `mp3`、`wav`、`flac`；流式仅支持 `mp3` |
+| `channel`     | 声道数                                                      |
 
 ### 高级字段
 
-| 字段 | 官方说明 |
-| --- | --- |
-| `pronunciation_dict` | 发音词典 |
-| `timbre_weights` | 音色权重 |
-| `language_boost` | 小语种/方言增强。官方默认 `null`，也可设为 `auto` |
-| `subtitle_enable` | 是否开启字幕服务，默认 `false` |
-| `output_format` | 非流式输出格式，`url` 或 `hex`，官方默认 `hex` |
-| `aigc_watermark` | 是否附加节奏标识，默认 `false` |
+| 字段                 | 官方说明                                          |
+| -------------------- | ------------------------------------------------- |
+| `pronunciation_dict` | 发音词典                                          |
+| `timbre_weights`     | 音色权重                                          |
+| `language_boost`     | 小语种/方言增强。官方默认 `null`，也可设为 `auto` |
+| `subtitle_enable`    | 是否开启字幕服务，默认 `false`                    |
+| `output_format`      | 非流式输出格式，`url` 或 `hex`，官方默认 `hex`    |
+| `aigc_watermark`     | 是否附加节奏标识，默认 `false`                    |
 
 ## 官方响应结构
 
@@ -88,27 +88,27 @@
 - `src/minimax/client.v` 中的 `Client.text_to_audio`
 - `src/minimax/types.v` 中的 `TTSRequest`
 
-| 官方字段 | 当前实现 | 说明 |
-| --- | --- | --- |
-| `model` | 已支持 | 通过 MCP 工具参数透出 |
-| `text` | 已支持 | 必填 |
-| `stream` | 未支持 | MCP 工具层未暴露 |
-| `stream_options` | 未支持 | MCP 工具层未暴露 |
-| `voice_setting.voice_id` | 已支持 | 已透出 |
-| `voice_setting.speed` | 已支持 | 已透出 |
-| `voice_setting.vol` | 已支持 | 已透出 |
-| `voice_setting.pitch` | 已支持 | 已透出 |
-| `voice_setting.emotion` | 已支持 | 已透出 |
-| `audio_setting.sample_rate` | 已支持 | 已透出 |
-| `audio_setting.bitrate` | 已支持 | 已透出 |
-| `audio_setting.format` | 已支持 | 已透出 |
-| `audio_setting.channel` | 已支持 | 已透出 |
-| `pronunciation_dict` | 未支持 | 当前未建模 |
-| `timbre_weights` | 未支持 | 当前未建模 |
-| `language_boost` | 已支持 | 当前工具省略时默认发送 `auto`，与官方默认 `null` 不同 |
-| `subtitle_enable` | 未支持 | 当前未建模 |
-| `output_format` | 间接支持 | 不直接暴露给 MCP 客户端，由 `MINIMAX_API_RESOURCE_MODE` 决定 |
-| `aigc_watermark` | 未支持 | 当前未建模 |
+| 官方字段                    | 当前实现 | 说明                                                         |
+| --------------------------- | -------- | ------------------------------------------------------------ |
+| `model`                     | 已支持   | 通过 MCP 工具参数透出                                        |
+| `text`                      | 已支持   | 必填                                                         |
+| `stream`                    | 未支持   | MCP 工具层未暴露                                             |
+| `stream_options`            | 未支持   | MCP 工具层未暴露                                             |
+| `voice_setting.voice_id`    | 已支持   | 已透出                                                       |
+| `voice_setting.speed`       | 已支持   | 已透出                                                       |
+| `voice_setting.vol`         | 已支持   | 已透出                                                       |
+| `voice_setting.pitch`       | 已支持   | 已透出                                                       |
+| `voice_setting.emotion`     | 已支持   | 已透出                                                       |
+| `audio_setting.sample_rate` | 已支持   | 已透出                                                       |
+| `audio_setting.bitrate`     | 已支持   | 已透出                                                       |
+| `audio_setting.format`      | 已支持   | 已透出                                                       |
+| `audio_setting.channel`     | 已支持   | 已透出                                                       |
+| `pronunciation_dict`        | 未支持   | 当前未建模                                                   |
+| `timbre_weights`            | 未支持   | 当前未建模                                                   |
+| `language_boost`            | 已支持   | 当前工具省略时默认发送 `auto`，与官方默认 `null` 不同        |
+| `subtitle_enable`           | 未支持   | 当前未建模                                                   |
+| `output_format`             | 间接支持 | 不直接暴露给 MCP 客户端，由 `MINIMAX_API_RESOURCE_MODE` 决定 |
+| `aigc_watermark`            | 未支持   | 当前未建模                                                   |
 
 ## 本次审查结论
 

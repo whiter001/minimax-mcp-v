@@ -15,23 +15,28 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 
 ## 工具列表
 
-| 工具名称                 | 功能描述                                                 |
-| ------------------------ | -------------------------------------------------------- |
-| `text_to_audio`          | 将文本转换为音频并保存。当前支持基础 voice/audio 参数    |
-| `list_voices`            | 列出所有可用的系统语音和克隆语音                         |
-| `voice_clone`            | 从音频文件克隆语音                                       |
-| `play_audio`             | 播放本地或远程音频文件                                   |
-| `generate_video`         | 从文本提示生成视频，支持模型选择和异步模式               |
-| `query_video_generation` | 查询视频生成任务状态                                     |
-| `text_to_image`          | 从文本提示生成图像，支持多种宽高比                       |
-| `music_generation`       | 从文本提示和歌词生成音乐                                 |
-| `voice_design`           | 从描述提示生成自定义语音                                 |
-| `web_search`             | 搜索网络，返回结构化结果                                 |
-| `understand_image`       | 分析图像内容，支持 URL 或本地文件（JPEG/PNG/WebP）       |
+| 工具名称                 | 功能描述                                              |
+| ------------------------ | ----------------------------------------------------- |
+| `text_to_audio`          | 将文本转换为音频并保存。当前支持基础 voice/audio 参数 |
+| `list_voices`            | 列出所有可用的系统语音和克隆语音                      |
+| `voice_clone`            | 从音频文件克隆语音                                    |
+| `play_audio`             | 播放本地或远程音频文件                                |
+| `generate_video`         | 从文本提示生成视频，支持模型选择和异步模式            |
+| `query_video_generation` | 查询视频生成任务状态                                  |
+| `text_to_image`          | 从文本提示生成图像，支持多种宽高比                    |
+| `music_generation`       | 从文本提示和歌词生成音乐                              |
+| `voice_design`           | 从描述提示生成自定义语音                              |
+| `web_search`             | 搜索网络，返回结构化结果                              |
+| `understand_image`       | 分析图像内容，支持 URL 或本地文件（JPEG/PNG/WebP）    |
 
 ## API 文档
 
+- `docs/api-overview.md`：MiniMax API 接口概览、能力分类、官方入口与当前仓库覆盖范围
+- `docs/file-management.md`：MiniMax 文件管理五个接口（上传、列出、检索、下载、删除）整理，以及当前仓库实现状态说明
+- `docs/voice-management.md`：MiniMax 音色管理接口（查询可用音色ID、删除音色）整理，以及当前仓库实现状态说明
 - `docs/speech-t2a-http.md`：MiniMax 同步语音合成 HTTP 官方文档整理，以及当前仓库实现的字段覆盖情况
+- `docs/speech-t2a-websocket.md`：MiniMax 同步语音合成 WebSocket 官方文档整理，以及当前仓库实现状态说明
+- `docs/speech-t2a-async-create.md`：MiniMax 异步长文本语音合成任务创建接口整理，以及当前仓库实现状态说明
 - `docs/README.md`：`docs/` 目录索引
 
 ## 使用方法

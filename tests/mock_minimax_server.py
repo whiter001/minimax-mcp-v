@@ -57,6 +57,21 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == '/assets/image.png':
             self._send_bytes(PNG_1X1, 'image/png')
             return
+        if parsed.path == '/assets/image-1.jpg':
+            self._send_bytes(b'mock-image-1', 'image/jpeg')
+            return
+        if parsed.path == '/assets/image-2.jpg':
+            self._send_bytes(b'mock-image-2', 'image/jpeg')
+            return
+        if parsed.path == '/assets/demo.wav':
+            self._send_bytes(b'mock-demo', 'audio/wav')
+            return
+        if parsed.path == '/assets/trial.mp3':
+            self._send_bytes(b'mock-trial', 'audio/mpeg')
+            return
+        if parsed.path == '/assets/music.mp3':
+            self._send_bytes(b'mock-music', 'audio/mpeg')
+            return
         if parsed.path == '/v1/video_generation':
             task_id = parse_qs(parsed.query).get('task_id', [''])[0]
             self._send_json(

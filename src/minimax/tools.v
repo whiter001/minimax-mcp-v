@@ -35,9 +35,23 @@ fn api_client() Client {
 fn current_resource_mode() string {
 	mode := os.getenv('MINIMAX_API_RESOURCE_MODE')
 	if mode.len > 0 {
-		return mode
+		return mode.trim_space().to_lower()
 	}
-	return 'url'
+	return 'local'
+}
+
+fn resolve_resource_mode(obj map[string]json2.Any) !string {
+	if mode := extract_string_field(obj, 'resource_mode') {
+		normalized := mode.trim_space().to_lower()
+		if normalized.len == 0 {
+			return current_resource_mode()
+		}
+		if normalized != 'url' && normalized != 'local' {
+			return error('resource_mode must be url or local')
+		}
+		return normalized
+	}
+	return current_resource_mode()
 }
 
 fn current_base_path() string {
@@ -124,6 +138,14 @@ fn write_text_file(path string, content string) ! {
 fn save_hex_payload(path string, hex_payload string) ! {
 	decoded := decode_hex_string(hex_payload)!
 	write_text_file(path, decoded.bytestr())!
+}
+
+fn save_resource_payload(path string, payload string) ! {
+	if payload.starts_with('http://') || payload.starts_with('https://') {
+		download_to_file(payload, path)!
+		return
+	}
+	save_hex_payload(path, payload)!
 }
 
 fn download_url(url string) !string {
@@ -235,6 +257,7 @@ fn text_to_audio_schema() json2.Any {
 		'text':             string_schema('Text to synthesize into audio.')
 		'voice_id':         string_schema('Voice ID to use for synthesis.')
 		'model':            string_schema('MiniMax speech model name.')
+		'resource_mode':    string_schema('Optional override for this call: url or local.')
 		'speed':            number_schema('Speech speed multiplier.')
 		'vol':              number_schema('Output volume multiplier.')
 		'pitch':            integer_schema('Pitch adjustment.')
@@ -260,6 +283,7 @@ fn voice_clone_schema() json2.Any {
 		'file':             string_schema('Local audio file path or remote URL.')
 		'text':             string_schema('Reference transcript for the uploaded audio.')
 		'is_url':           boolean_schema('Whether the file field is a remote URL.')
+		'resource_mode':    string_schema('Optional override for this call: url or local.')
 		'output_directory': string_schema('Optional local output directory when resource mode is local.')
 	}, ['voice_id', 'file', 'text'])
 }
@@ -275,6 +299,7 @@ fn generate_video_schema() json2.Any {
 	return object_schema_with({
 		'prompt':            string_schema('Text prompt used to generate the video.')
 		'model':             string_schema('Video generation model.')
+		'resource_mode':     string_schema('Optional override for this call: url or local.')
 		'async_mode':        boolean_schema('Return a task ID without polling for completion.')
 		'first_frame_image': string_schema('Optional first frame image URL or local path.')
 		'resolution':        string_schema('Optional output resolution preset.')
@@ -286,6 +311,7 @@ fn generate_video_schema() json2.Any {
 fn query_video_generation_schema() json2.Any {
 	return object_schema_with({
 		'task_id':          string_schema('Video generation task ID to query.')
+		'resource_mode':    string_schema('Optional override for this call: url or local.')
 		'output_directory': string_schema('Optional local output directory when resource mode is local.')
 	}, ['task_id'])
 }
@@ -294,6 +320,7 @@ fn text_to_image_schema() json2.Any {
 	return object_schema_with({
 		'prompt':           string_schema('Text prompt used to generate images.')
 		'model':            string_schema('Image generation model.')
+		'resource_mode':    string_schema('Optional override for this call: url or local.')
 		'aspect_ratio':     string_schema('Target image aspect ratio.')
 		'n':                integer_schema('Number of images to generate.')
 		'prompt_optimizer': boolean_schema('Whether to enable prompt optimization.')
@@ -305,6 +332,7 @@ fn music_generation_schema() json2.Any {
 	return object_schema_with({
 		'prompt':           string_schema('Text prompt describing the desired music.')
 		'lyrics':           string_schema('Lyrics to render into the generated music.')
+		'resource_mode':    string_schema('Optional override for this call: url or local.')
 		'output_directory': string_schema('Optional local output directory when resource mode is local.')
 	}, ['prompt', 'lyrics'])
 }
@@ -314,6 +342,7 @@ fn voice_design_schema() json2.Any {
 		'prompt':           string_schema('Description of the desired voice.')
 		'preview_text':     string_schema('Preview text to synthesize with the designed voice.')
 		'voice_id':         string_schema('Optional existing voice ID to refine.')
+		'resource_mode':    string_schema('Optional override for this call: url or local.')
 		'output_directory': string_schema('Optional local output directory when resource mode is local.')
 	}, ['prompt', 'preview_text'])
 }
@@ -441,7 +470,7 @@ fn text_to_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 	obj := args.as_map()
 
 	text := required_string_field(obj, 'text', 'text is required')!
-	resource_mode := current_resource_mode()
+	resource_mode := resolve_resource_mode(obj)!
 	voice_id := get_string_field(obj, 'voice_id', default_voice_id)
 	model := get_string_field(obj, 'model', default_speech_model)
 	speed := get_f64_field(obj, 'speed', default_speed)
@@ -547,6 +576,7 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	voice_id := required_string_field(obj, 'voice_id', 'voice_id is required')!
 	file_path := required_string_field(obj, 'file', 'file is required')!
 	text := required_string_field(obj, 'text', 'text is required')!
+	resource_mode := resolve_resource_mode(obj)!
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
 
 	is_url := if is_url_val := obj['is_url'] { is_url_val.bool() } else { false }
@@ -568,7 +598,7 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 
 	clone_result := api_client().voice_clone(clone_req)!
 	if demo_audio := clone_result['demo_audio'] {
-		if current_resource_mode() == 'url' {
+		if resource_mode == 'url' {
 			return mcp.CallToolResult{
 				content:  [
 					mcp.Content{
@@ -583,7 +613,7 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 		output_dir := resolve_output_dir(output_directory)
 		output_file := build_output_file_path('voice_clone', text, 'wav')
 		output_path := output_dir + '/' + output_file
-		download_to_file(demo_audio.str(), output_path)!
+		save_resource_payload(output_path, demo_audio.str())!
 
 		return mcp.CallToolResult{
 			content:  [
@@ -646,6 +676,7 @@ fn generate_video_handler(name string, arguments ?json2.Any) !mcp.CallToolResult
 
 	prompt := required_string_field(obj, 'prompt', 'prompt is required')!
 	model := get_string_field(obj, 'model', default_t2v_model)
+	resource_mode := resolve_resource_mode(obj)!
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
 	async_mode := get_bool_field(obj, 'async_mode', false)
 	first_frame_image := extract_string_field(obj, 'first_frame_image')
@@ -705,7 +736,7 @@ fn generate_video_handler(name string, arguments ?json2.Any) !mcp.CallToolResult
 	}
 	video_url := download_url.str()
 
-	if current_resource_mode() == 'url' {
+	if resource_mode == 'url' {
 		return mcp.CallToolResult{
 			content:  [
 				mcp.Content{
@@ -738,6 +769,7 @@ fn query_video_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	obj := args.as_map()
 
 	task_id := obj['task_id'] or { return error('Missing task_id') }
+	resource_mode := resolve_resource_mode(obj)!
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
 
 	result := api_client().query_video(task_id.str())!
@@ -774,7 +806,7 @@ fn query_video_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	}
 	video_url := download_url.str()
 
-	if current_resource_mode() == 'url' {
+	if resource_mode == 'url' {
 		return mcp.CallToolResult{
 			content:  [
 				mcp.Content{
@@ -808,6 +840,7 @@ fn text_to_image_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 
 	prompt := obj['prompt'] or { return error('Missing prompt') }
 	model := get_string_field(obj, 'model', default_t2i_model)
+	resource_mode := resolve_resource_mode(obj)!
 	aspect_ratio := get_string_field(obj, 'aspect_ratio', '1:1')
 	n := get_int_field(obj, 'n', 1)
 	prompt_optimizer := get_bool_field(obj, 'prompt_optimizer', true)
@@ -828,7 +861,7 @@ fn text_to_image_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 
 	arr := image_urls.as_array()
 	if arr.len > 0 {
-		if current_resource_mode() == 'url' {
+		if resource_mode == 'url' {
 			mut urls_text := 'Image URLs: '
 			for i, url in arr {
 				urls_text += '${i + 1}. ${url.str()}; '
@@ -873,6 +906,7 @@ fn music_generation_handler(name string, arguments ?json2.Any) !mcp.CallToolResu
 
 	prompt := required_string_field(obj, 'prompt', 'prompt is required')!
 	lyrics := required_string_field(obj, 'lyrics', 'lyrics is required')!
+	resource_mode := resolve_resource_mode(obj)!
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
 
 	req := MusicGenerationRequest{
@@ -892,7 +926,7 @@ fn music_generation_handler(name string, arguments ?json2.Any) !mcp.CallToolResu
 	audio := audio_data['audio'] or { return error('No audio in response') }
 	audio_text := audio.str()
 
-	if current_resource_mode() == 'url' {
+	if resource_mode == 'url' {
 		return mcp.CallToolResult{
 			content:  [
 				mcp.Content{
@@ -907,7 +941,7 @@ fn music_generation_handler(name string, arguments ?json2.Any) !mcp.CallToolResu
 	output_dir := resolve_output_dir(output_directory)
 	output_file := build_output_file_path('music', prompt, default_format)
 	output_path := output_dir + '/' + output_file
-	save_hex_payload(output_path, audio_text)!
+	save_resource_payload(output_path, audio_text)!
 
 	return mcp.CallToolResult{
 		content:  [
@@ -927,6 +961,7 @@ fn voice_design_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	prompt := required_string_field(obj, 'prompt', 'prompt is required')!
 	preview_text := required_string_field(obj, 'preview_text', 'preview_text is required')!
 	voice_id := extract_string_field(obj, 'voice_id')
+	resource_mode := resolve_resource_mode(obj)!
 	output_directory := extract_string_field(obj, 'output_directory') or { '' }
 
 	req := VoiceDesignRequest{
@@ -939,7 +974,7 @@ fn voice_design_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 	generated_voice_id := result['voice_id'] or { return error('No voice_id in response') }
 
 	if trial_audio := result['trial_audio'] {
-		if current_resource_mode() == 'url' {
+		if resource_mode == 'url' {
 			return mcp.CallToolResult{
 				content:  [
 					mcp.Content{
@@ -954,7 +989,7 @@ fn voice_design_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 		output_dir := resolve_output_dir(output_directory)
 		output_file := build_output_file_path('voice_design', preview_text, 'mp3')
 		output_path := output_dir + '/' + output_file
-		save_hex_payload(output_path, trial_audio.str())!
+		save_resource_payload(output_path, trial_audio.str())!
 
 		return mcp.CallToolResult{
 			content:  [

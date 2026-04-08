@@ -55,7 +55,7 @@ pub fn load_config() !Config {
 
 	mut resource_mode := os.getenv(env_resource_mode)
 	if resource_mode.len == 0 {
-		resource_mode = resource_mode_url
+		resource_mode = resource_mode_local
 	}
 
 	port_str := os.getenv(env_mcp_port)

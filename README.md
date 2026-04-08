@@ -9,9 +9,11 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 | `MINIMAX_API_KEY`           | 是   | -                          | MiniMax API 密钥                                |
 | `MINIMAX_API_HOST`          | 否   | `https://api.minimaxi.com` | API 主机地址                                    |
 | `MINIMAX_MCP_BASE_PATH`     | 否   | `~/Desktop`                | 文件输出目录                                    |
-| `MINIMAX_API_RESOURCE_MODE` | 否   | `url`                      | 资源模式：`url` 返回 URL，`local` 保存本地文件  |
+| `MINIMAX_API_RESOURCE_MODE` | 否   | `local`                    | 资源模式：`url` 返回 URL，`local` 保存本地文件  |
 | `MINIMAX_MCP_MODE`          | 否   | `stdio`                    | 运行模式；当前仅 `stdio` 已实现，`sse` 仍未接线 |
 | `MINIMAX_MCP_PORT`          | 否   | `33000`                    | 预留给 SSE 模式的端口号                         |
+
+输出类工具也支持单次传参 `resource_mode=url|local`，优先级高于 `MINIMAX_API_RESOURCE_MODE`。
 
 ## 工具列表
 

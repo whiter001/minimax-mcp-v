@@ -67,3 +67,13 @@ fn test_understand_image_schema_uses_canonical_fields_only() {
 fn test_default_video_model_matches_reference() {
 	assert minimax.default_t2v_model == 'MiniMax-Hailuo-2.3'
 }
+
+fn test_output_tools_expose_resource_mode_override() {
+	for tool_name in ['text_to_audio', 'voice_clone', 'generate_video', 'query_video_generation',
+		'text_to_image', 'music_generation', 'voice_design'] {
+		tool := minimax.tool_definitions().filter(it.name == tool_name)[0]
+		schema := tool.input_schema.as_map()
+		properties := (schema['properties'] or { panic('missing properties for ${tool_name}') }).as_map()
+		assert properties.str().contains('"resource_mode"')
+	}
+}

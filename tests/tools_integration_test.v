@@ -28,24 +28,36 @@ fn test_tools_call_success_paths_with_mock_upstream() {
 	configure_minimax_env(upstream.base_url)
 
 	mut server := new_test_server()
+	default_output_dir := os.temp_dir()
 
 	audio_text := call_tool_text(mut server, 1, 'text_to_audio', '{"text":"hello from test"}')
-	assert audio_text == 'Success. Audio URL: ${upstream.base_url}/assets/audio.mp3'
+	assert audio_text == 'Success. Audio saved as: ${default_output_dir}/t2a_hello_from_test.mp3. Voice used: female-shaonv'
+	assert os.read_file(os.join_path(default_output_dir, 't2a_hello_from_test.mp3')) or {
+		panic(err)
+	} == 'mock-audio'
 
 	voices_text := call_tool_text(mut server, 2, 'list_voices', '{"voice_type":"all"}')
 	assert voices_text.contains('Name: System Voice, ID: sys-voice-1;')
 	assert voices_text.contains('Name: Clone Voice, ID: clone-voice-1;')
 
 	image_text := call_tool_text(mut server, 3, 'text_to_image', '{"prompt":"sunset skyline","n":2}')
-	assert image_text.contains('${upstream.base_url}/assets/image-1.jpg')
-	assert image_text.contains('${upstream.base_url}/assets/image-2.jpg')
+	assert image_text.contains('Success. Images saved as:')
+	assert os.read_file(os.join_path(default_output_dir, 'image_1_sunset_skyline.jpg')) or {
+		panic(err)
+	} == 'mock-image-1'
+	assert os.read_file(os.join_path(default_output_dir, 'image_2_sunset_skyline.jpg')) or {
+		panic(err)
+	} == 'mock-image-2'
 
 	music_text := call_tool_text(mut server, 4, 'music_generation', '{"prompt":"soft piano","lyrics":"la la la"}')
-	assert music_text == 'Success. Music URL: ${upstream.base_url}/assets/music.mp3'
+	assert music_text == 'Success. Music saved as: ${default_output_dir}/music_soft_piano.mp3'
+	assert os.read_file(os.join_path(default_output_dir, 'music_soft_piano.mp3')) or { panic(err) } == 'mock-music'
 
 	voice_design_text := call_tool_text(mut server, 5, 'voice_design', '{"prompt":"warm narrator","preview_text":"hello world"}')
-	assert voice_design_text.contains('Voice ID generated: designed-voice-123')
-	assert voice_design_text.contains('${upstream.base_url}/assets/trial.mp3')
+	assert voice_design_text == 'Success. File saved as: ${default_output_dir}/voice_design_hello_world.mp3. Voice ID generated: designed-voice-123'
+	assert os.read_file(os.join_path(default_output_dir, 'voice_design_hello_world.mp3')) or {
+		panic(err)
+	} == 'mock-trial'
 
 	search_text := call_tool_text(mut server, 6, 'web_search', '{"query":"weather"}')
 	assert search_text.contains('Result for weather')
@@ -63,7 +75,10 @@ fn test_tools_call_success_paths_with_mock_upstream() {
 	defer {
 		os.rm(temp_image) or {}
 	}
-	understand_local_text := call_tool_text(mut server, 71, 'understand_image', '{"prompt":"describe local image","image_source":"${temp_image}"}')
+	understand_local_text := call_tool_text(mut server, 71, 'understand_image', encode_tool_args({
+		'prompt':       'describe local image'
+		'image_source': temp_image
+	}))
 	assert understand_local_text == 'VLM saw: describe local image'
 
 	jpeg_fixture := os.join_path(@DIR, 'a.jpeg')
@@ -82,62 +97,72 @@ fn test_tools_call_success_paths_with_mock_upstream() {
 	defer {
 		os.rm(temp_audio) or {}
 	}
-	voice_clone_text := call_tool_text(mut server, 8, 'voice_clone', '{"voice_id":"clone-target","file":"${temp_audio}","text":"test clone"}')
-	assert voice_clone_text.contains('Voice cloned successfully. Voice ID: clone-target')
-	assert voice_clone_text.contains('${upstream.base_url}/assets/demo.wav')
+	voice_clone_text := call_tool_text(mut server, 8, 'voice_clone', encode_tool_args({
+		'voice_id': 'clone-target'
+		'file':     temp_audio
+		'text':     'test clone'
+	}))
+	assert voice_clone_text == 'Voice cloned successfully. Voice ID: clone-target, demo audio saved as: ${default_output_dir}/voice_clone_test_clone.wav'
+	assert os.read_file(os.join_path(default_output_dir, 'voice_clone_test_clone.wav')) or {
+		panic(err)
+	} == 'mock-demo'
 
 	video_text := call_tool_text(mut server, 9, 'generate_video', '{"prompt":"robot dancing"}')
-	assert video_text == 'Success. Video URL: ${upstream.base_url}/assets/video.mp4'
+	assert video_text == 'Success. Video saved as: ${default_output_dir}/video_video-task-123.mp4'
+	assert os.read_file(os.join_path(default_output_dir, 'video_video-task-123.mp4')) or {
+		panic(err)
+	} == 'mock-video'
 
 	query_text := call_tool_text(mut server, 10, 'query_video_generation', '{"task_id":"video-task-123"}')
-	assert query_text == 'Success. Video URL: ${upstream.base_url}/assets/video.mp4'
-}
+	assert query_text == 'Success. Video saved as: ${default_output_dir}/video_video-task-123.mp4'
 
-fn test_text_to_audio_saves_local_file_with_hex_response() {
-	mut upstream := start_mock_upstream()
-	defer {
-		upstream.close()
-	}
-
-	snapshot := save_minimax_env()
-	defer {
-		restore_minimax_env(snapshot)
-	}
-	configure_minimax_env(upstream.base_url)
-	os.setenv('MINIMAX_API_RESOURCE_MODE', 'local', true)
-
-	output_dir := os.join_path(os.temp_dir(), 'minimax_t2a_local_${os.getpid()}')
-	os.mkdir_all(output_dir) or { panic(err) }
-	defer {
-		os.rmdir_all(output_dir) or {}
-	}
-
-	mut server := new_test_server()
-	audio_text := call_tool_text(mut server, 12, 'text_to_audio', '{"text":"hello local","output_directory":"${output_dir}"}')
-	assert audio_text == 'Success. Audio saved as: ${output_dir}/t2a_hello_local.mp3. Voice used: female-shaonv'
-	assert os.read_file(os.join_path(output_dir, 't2a_hello_local.mp3')) or { panic(err) } == 'mock-audio'
-}
-
-fn test_tools_call_surfaces_upstream_business_error_with_trace_id() {
-	mut upstream := start_mock_upstream()
-	defer {
-		upstream.close()
-	}
-
-	snapshot := save_minimax_env()
-	defer {
-		restore_minimax_env(snapshot)
-	}
-	configure_minimax_env(upstream.base_url)
-
-	mut server := new_test_server()
 	resp := call_tool(mut server, 11, 'web_search', '{"query":"trigger upstream error"}')
-
 	assert resp.result == none
 	assert resp.error != none
 	err := resp.error or { panic('missing error') }
 	assert err.code == protocol.mcp_error_internal_error
 	assert err.message == 'MiniMax API error 1004: invalid api key Trace-Id: mock-trace-123'
+
+	audio_output_dir := os.join_path(os.temp_dir(), 'minimax_t2a_local_${os.getpid()}')
+	os.mkdir_all(audio_output_dir) or { panic(err) }
+	defer {
+		os.rmdir_all(audio_output_dir) or {}
+	}
+
+	local_audio_text := call_tool_text(mut server, 12, 'text_to_audio', encode_tool_args({
+		'text':             'hello local'
+		'resource_mode':    'local'
+		'output_directory': audio_output_dir
+	}))
+	assert local_audio_text == 'Success. Audio saved as: ${audio_output_dir}/t2a_hello_local.mp3. Voice used: female-shaonv'
+	assert os.read_file(os.join_path(audio_output_dir, 't2a_hello_local.mp3')) or { panic(err) } == 'mock-audio'
+
+	image_output_dir := os.join_path(os.temp_dir(), 'minimax_t2i_local_${os.getpid()}')
+	os.mkdir_all(image_output_dir) or { panic(err) }
+	defer {
+		os.rmdir_all(image_output_dir) or {}
+	}
+
+	local_image_text := call_tool_text(mut server, 13, 'text_to_image', encode_tool_args({
+		'prompt':           'sunset skyline'
+		'n':                2
+		'resource_mode':    'local'
+		'output_directory': image_output_dir
+	}))
+	assert local_image_text.contains('Success. Images saved as:')
+
+	first_image := os.join_path(image_output_dir, 'image_1_sunset_skyline.jpg')
+	second_image := os.join_path(image_output_dir, 'image_2_sunset_skyline.jpg')
+	assert os.exists(first_image)
+	assert os.exists(second_image)
+	assert os.read_file(first_image) or { panic(err) } == 'mock-image-1'
+	assert os.read_file(second_image) or { panic(err) } == 'mock-image-2'
+
+	url_override_text := call_tool_text(mut server, 14, 'text_to_image', encode_tool_args({
+		'prompt':        'override check'
+		'resource_mode': 'url'
+	}))
+	assert url_override_text.contains('Success. Image URLs:')
 }
 
 struct MinimaxEnvSnapshot {
@@ -174,7 +199,6 @@ fn restore_env_var(name string, value string) {
 fn configure_minimax_env(base_url string) {
 	os.setenv('MINIMAX_API_KEY', 'integration-test-key', true)
 	os.setenv('MINIMAX_API_HOST', base_url, true)
-	os.setenv('MINIMAX_API_RESOURCE_MODE', 'url', true)
 	os.setenv('MINIMAX_MCP_BASE_PATH', os.temp_dir(), true)
 	minimax.init_client('integration-test-key', base_url)
 }
@@ -197,6 +221,10 @@ fn call_tool_text(mut server mcp.McpServer, id int, tool_name string, args_json 
 	assert items.len > 0
 	text := items[0].as_map()['text'] or { panic('missing text') }
 	return text.str()
+}
+
+fn encode_tool_args(args map[string]json2.Any) string {
+	return json2.encode(args, json2.EncoderOptions{})
 }
 
 fn call_tool(mut server mcp.McpServer, id int, tool_name string, args_json string) protocol.JsonRpcResponse {
@@ -224,10 +252,17 @@ fn call_tool(mut server mcp.McpServer, id int, tool_name string, args_json strin
 }
 
 fn start_mock_upstream() MockUpstream {
-	python3 := os.find_abs_path_of_executable('python3') or {
-		panic('python3 is required for tools integration tests')
+	mut python_exec := ''
+	if p := os.find_abs_path_of_executable('python3') {
+		python_exec = p
+	} else if p := os.find_abs_path_of_executable('python') {
+		python_exec = p
+	} else if p := os.find_abs_path_of_executable('py') {
+		python_exec = p
+	} else {
+		panic('python3, python, or py is required for tools integration tests')
 	}
-	mut process := os.new_process(python3)
+	mut process := os.new_process(python_exec)
 	process.set_args(['-u', mock_server_script])
 	process.set_work_folder(@DIR)
 	process.set_redirect_stdio()

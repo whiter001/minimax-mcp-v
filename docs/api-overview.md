@@ -88,6 +88,12 @@
 
 - <https://solutions.minimaxi.com/> 是 MiniMax 的在线接口调试台，可直接调试语音合成、音色复刻等接口
 
+### 输出模式
+
+- 语音、视频、图像、音乐和音色复刻这类输出工具支持单次传参 `resource_mode=url|local`
+- 传参优先于环境变量 `MINIMAX_API_RESOURCE_MODE`
+- 未传参时默认按 `local` 处理
+
 ## 当前仓库覆盖范围
 
 当前仓库并没有实现这页里的全部能力，只覆盖了其中一部分：

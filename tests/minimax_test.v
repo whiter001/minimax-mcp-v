@@ -57,8 +57,10 @@ fn test_understand_image_schema_uses_canonical_fields_only() {
 	properties := (schema['properties'] or { panic('missing properties') }).as_map()
 	assert 'prompt' in properties
 	assert 'image_source' in properties
-	assert !('image_url' in properties)
-	additional_properties := schema['additionalProperties'] or { panic('missing additionalProperties') }
+	assert 'image_url' !in properties
+	additional_properties := schema['additionalProperties'] or {
+		panic('missing additionalProperties')
+	}
 	assert additional_properties.bool() == false
 }
 

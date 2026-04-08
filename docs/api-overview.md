@@ -84,9 +84,9 @@
 - 官方提供 Python 版本和 JavaScript 版本的 MCP 服务器实现
 - 官方页面指向 MiniMax MCP 使用指南
 
-### 语音调试台
+### 在线接口调试台
 
-- 官方页面提供语音合成与音色复刻的调试入口
+- <https://solutions.minimaxi.com/> 是 MiniMax 的在线接口调试台，可直接调试语音合成、音色复刻等接口
 
 ## 当前仓库覆盖范围
 

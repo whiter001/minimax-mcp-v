@@ -6,6 +6,8 @@ Thumbs.db
 # Environment files
 .env
 .env.*
+.mcp.json
+mcp_server_config.json
 
 # V / build outputs
 bin/

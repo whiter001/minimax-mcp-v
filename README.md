@@ -17,13 +17,13 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 
 | 工具名称                 | 功能描述                                              |
 | ------------------------ | ----------------------------------------------------- |
-| `text_to_audio`          | 将文本转换为音频并保存。当前支持基础 voice/audio 参数 |
+| `text_to_audio`          | 将文本转换为音频并保存。默认模型 `speech-2.8-hd`，默认音色 `female-shaonv` |
 | `list_voices`            | 列出所有可用的系统语音和克隆语音                      |
 | `voice_clone`            | 从音频文件克隆语音                                    |
 | `play_audio`             | 播放本地或远程音频文件                                |
 | `generate_video`         | 从文本提示生成视频，支持模型选择和异步模式            |
 | `query_video_generation` | 查询视频生成任务状态                                  |
-| `text_to_image`          | 从文本提示生成图像，支持多种宽高比                    |
+| `text_to_image`          | 从文本提示生成图像，默认模型 `image-01`，支持多种宽高比 |
 | `music_generation`       | 从文本提示和歌词生成音乐                              |
 | `voice_design`           | 从描述提示生成自定义语音                              |
 | `web_search`             | 搜索网络，返回结构化结果                              |
@@ -31,6 +31,7 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 
 ## API 文档
 
+- <https://solutions.minimaxi.com/>：MiniMax 在线接口调试台，可直接调试语音合成、音色复刻等接口
 - `docs/api-overview.md`：MiniMax API 接口概览、能力分类、官方入口与当前仓库覆盖范围
 - `docs/file-management.md`：MiniMax 文件管理五个接口（上传、列出、检索、下载、删除）整理，以及当前仓库实现状态说明
 - `docs/voice-management.md`：MiniMax 音色管理接口（查询可用音色ID、删除音色）整理，以及当前仓库实现状态说明
@@ -57,6 +58,8 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
   }
 }
 ```
+
+仓库提供了 `mcp_server_config.example.json` 作为 demo 模板，复制后填入真实密钥即可；`.mcp.json` 和 `mcp_server_config.json` 这类本地真实配置已加入 `.gitignore`。
 
 ### 编译
 

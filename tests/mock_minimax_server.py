@@ -87,6 +87,13 @@ class Handler(BaseHTTPRequestHandler):
         payload, raw_body = self._read_body()
 
         if parsed.path == '/v1/t2a_v2':
+            if payload.get('model') != 'speech-2.8-hd':
+                self.send_error(400, 'unexpected default speech model')
+                return
+            voice_setting = payload.get('voice_setting', {})
+            if not isinstance(voice_setting, dict) or voice_setting.get('voice_id') != 'female-shaonv':
+                self.send_error(400, 'unexpected default voice_id')
+                return
             output_format = str(payload.get('output_format', 'hex'))
             audio_payload = f'{self.base_url}/assets/audio.mp3' if output_format == 'url' else b'mock-audio'.hex()
             self._send_json(
@@ -123,6 +130,9 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({'base_resp': {'status_code': 0}, 'task_id': 'video-task-123'})
             return
         if parsed.path == '/v1/image_generation':
+            if payload.get('model') != 'image-01':
+                self.send_error(400, 'unexpected default image model')
+                return
             self._send_json(
                 {
                     'base_resp': {'status_code': 0},

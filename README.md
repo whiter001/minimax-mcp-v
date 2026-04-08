@@ -15,21 +15,25 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 
 输出类工具也支持单次传参 `resource_mode=url|local`，优先级高于 `MINIMAX_API_RESOURCE_MODE`。
 
+本地保存时，`MINIMAX_MCP_BASE_PATH` 只定义默认输出根目录，`output_directory` 只表示子目录或绝对目录，不表示最终文件名。最终文件名由程序自动生成，并会做 ASCII 安全清洗；如果输入里包含中文或其他非 ASCII 字符，文件名会自动附加短哈希，避免再次出现路径编码问题。
+
 ## 工具列表
 
-| 工具名称                 | 功能描述                                              |
-| ------------------------ | ----------------------------------------------------- |
+| 工具名称                 | 功能描述                                                                   |
+| ------------------------ | -------------------------------------------------------------------------- |
 | `text_to_audio`          | 将文本转换为音频并保存。默认模型 `speech-2.8-hd`，默认音色 `female-shaonv` |
-| `list_voices`            | 列出所有可用的系统语音和克隆语音                      |
-| `voice_clone`            | 从音频文件克隆语音                                    |
-| `play_audio`             | 播放本地或远程音频文件                                |
-| `generate_video`         | 从文本提示生成视频，支持模型选择和异步模式            |
-| `query_video_generation` | 查询视频生成任务状态                                  |
-| `text_to_image`          | 从文本提示生成图像，默认模型 `image-01`，支持多种宽高比 |
-| `music_generation`       | 从文本提示和歌词生成音乐                              |
-| `voice_design`           | 从描述提示生成自定义语音                              |
-| `web_search`             | 搜索网络，返回结构化结果                              |
-| `understand_image`       | 分析图像内容，支持 URL 或本地文件（JPEG/PNG/WebP）    |
+| `list_voices`            | 列出所有可用的系统语音和克隆语音                                           |
+| `voice_clone`            | 从音频文件克隆语音                                                         |
+| `play_audio`             | 播放本地或远程音频文件                                                     |
+| `generate_video`         | 从文本提示生成视频，支持模型选择和异步模式                                 |
+| `query_video_generation` | 查询视频生成任务状态                                                       |
+| `text_to_image`          | 从文本提示生成图像，默认模型 `image-01`，支持多种宽高比                    |
+| `music_generation`       | 从文本提示和歌词生成音乐                                                   |
+| `voice_design`           | 从描述提示生成自定义语音                                                   |
+| `web_search`             | 搜索网络，返回结构化结果                                                   |
+| `understand_image`       | 分析图像内容，支持 URL 或本地文件（JPEG/PNG/WebP）                         |
+
+本地落盘工具不需要也不支持在 `output_directory` 里手写完整文件名。只传目录即可，文件名会由工具自动生成。
 
 ## API 文档
 
@@ -106,6 +110,24 @@ MiniMax MCP 服务器，提供文本到音频、视频、图像生成等功能�
 - `tools/call` 参数校验错误
 
 这个 smoke 不会调用真实 MiniMax API；它只验证本地协议握手、通知、工具枚举和 `tools/call` 分派路径。
+
+如果你想额外跑一条真实的文生图链路，可以显式开启 live image smoke：
+
+```bash
+python3 scripts/stdio_smoke.py \
+  --live-image \
+  --live-api-key "$MINIMAX_API_KEY" \
+  --live-api-host "https://api.minimaxi.com"
+```
+
+这条 live 路径会：
+
+- 以 `local` 模式调用 `text_to_image`
+- 把生成图片写到脚本创建的临时目录
+- 校验返回结果里包含本地保存路径，并确认文件存在且非空
+- 在 smoke 结束后自动清理临时目录
+
+如果你的 shell 里已经导出了 `MINIMAX_API_KEY` 和 `MINIMAX_API_HOST`，也可以不传对应参数；`--live-prompt` 还能单独改写这条 live 校验用的提示词。
 
 ## understand_image 参数示例
 

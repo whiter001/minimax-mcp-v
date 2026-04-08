@@ -86,7 +86,7 @@ pub fn load_config() !Config {
 
 // build_output_path builds the output path for a file
 pub fn build_output_path(base_path string, filename string) string {
-	return base_path + '/' + filename
+	return os.join_path(base_path, filename)
 }
 
 // file_exists checks if a file exists

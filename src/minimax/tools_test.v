@@ -10,6 +10,21 @@ fn test_video_retry_helpers_match_reference_defaults() {
 	assert video_max_retries(default_t2v_model) == 30
 }
 
+fn test_build_output_file_path_keeps_ascii_names_stable() {
+	assert build_output_file_path('image_1', 'sunset skyline', 'jpg') == 'image_1_sunset_skyline.jpg'
+}
+
+fn test_build_output_file_path_handles_non_ascii_input() {
+	sanitized, saw_non_ascii := sanitize_filename('貂蝉')
+	assert sanitized == 'output'
+	assert saw_non_ascii
+
+	path := build_output_file_path('image_1', '貂蝉', 'jpg')
+	assert path.starts_with('image_1_output_')
+	assert path.ends_with('.jpg')
+	assert !path.contains('貂')
+}
+
 fn test_web_search_handler_rejects_empty_query() {
 	args := json2.decode[json2.Any]('{"query":"   "}', json2.DecoderOptions{}) or { panic(err) }
 

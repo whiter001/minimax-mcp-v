@@ -18,6 +18,7 @@ pub fn init_client(api_key string, host string) {
 }
 
 const default_api_host = 'https://api.minimaxi.com'
+const output_directory_schema_description = 'Optional local output directory when resource mode is local. Final filenames are auto-generated and ASCII-safe.'
 
 fn api_client() Client {
 	api_key := os.getenv('MINIMAX_API_KEY')
@@ -69,7 +70,7 @@ fn resolve_output_dir(output_directory string) string {
 	if output_directory.starts_with('/') || output_directory.contains(':') {
 		return output_directory
 	}
-	return current_base_path() + '/' + output_directory
+	return os.join_path(current_base_path(), output_directory)
 }
 
 fn ensure_dir(path string) ! {
@@ -78,22 +79,80 @@ fn ensure_dir(path string) ! {
 	}
 }
 
-fn sanitize_filename(input string) string {
-	mut output := input.trim_space()
-	if output.len == 0 {
-		return 'output'
+fn trim_filename_edges(value string) string {
+	mut start := 0
+	mut end := value.len
+	for start < end {
+		ch := value[start]
+		if ch == `.` || ch == `-` || ch == `_` {
+			start++
+			continue
+		}
+		break
 	}
-	output = output.replace(' ', '_')
-	output = output.replace('/', '_')
-	output = output.replace('\\', '_')
-	output = output.replace(':', '_')
-	output = output.replace('?', '_')
-	output = output.replace('&', '_')
-	output = output.replace('=', '_')
-	if output.len > 32 {
-		output = output[..32]
+	for end > start {
+		ch := value[end - 1]
+		if ch == `.` || ch == `-` || ch == `_` {
+			end--
+			continue
+		}
+		break
 	}
-	return output
+	return value[start..end]
+}
+
+fn filename_hash(seed string) string {
+	mut hash := u64(1469598103934665603)
+	for b in seed.bytes() {
+		hash ^= u64(b)
+		hash *= u64(1099511628211)
+	}
+	return hash.str()
+}
+
+fn sanitize_filename(input string) (string, bool) {
+	trimmed := input.trim_space()
+	if trimmed.len == 0 {
+		return 'output', false
+	}
+	mut output := []u8{cap: trimmed.len}
+	mut last_was_separator := false
+	mut saw_non_ascii := false
+	for b in trimmed.bytes() {
+		is_ascii_letter := (b >= `a` && b <= `z`) || (b >= `A` && b <= `Z`)
+		is_ascii_digit := b >= `0` && b <= `9`
+		is_safe_punctuation := b == `.` || b == `-` || b == `_`
+		if is_ascii_letter || is_ascii_digit {
+			output << b
+			last_was_separator = false
+			continue
+		}
+		if b >= 128 {
+			saw_non_ascii = true
+		}
+		if is_safe_punctuation {
+			if output.len > 0 && !last_was_separator {
+				output << b
+				last_was_separator = true
+			}
+			continue
+		}
+		if output.len > 0 && !last_was_separator {
+			output << `_`
+			last_was_separator = true
+		}
+	}
+	mut result := trim_filename_edges(output.bytestr())
+	if result.len == 0 {
+		return 'output', saw_non_ascii
+	}
+	if result.len > 32 {
+		result = trim_filename_edges(result[..32])
+		if result.len == 0 {
+			return 'output', saw_non_ascii
+		}
+	}
+	return result, saw_non_ascii
 }
 
 fn hex_char_value(c u8) !u8 {
@@ -166,7 +225,11 @@ fn download_to_file(url string, path string) ! {
 }
 
 fn build_output_file_path(prefix string, seed string, extension string) string {
-	return '${prefix}_${sanitize_filename(seed)}.${extension}'
+	sanitized, saw_non_ascii := sanitize_filename(seed)
+	if saw_non_ascii {
+		return '${prefix}_${sanitized}_${filename_hash(seed)}.${extension}'
+	}
+	return '${prefix}_${sanitized}.${extension}'
 }
 
 fn extract_string_field(obj map[string]json2.Any, key string) ?string {
@@ -267,7 +330,7 @@ fn text_to_audio_schema() json2.Any {
 		'channel':          integer_schema('Output channel count.')
 		'format':           string_schema('Output audio format, for example mp3.')
 		'language_boost':   string_schema('Language boost mode.')
-		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+		'output_directory': string_schema(output_directory_schema_description)
 	}, ['text'])
 }
 
@@ -284,7 +347,7 @@ fn voice_clone_schema() json2.Any {
 		'text':             string_schema('Reference transcript for the uploaded audio.')
 		'is_url':           boolean_schema('Whether the file field is a remote URL.')
 		'resource_mode':    string_schema('Optional override for this call: url or local.')
-		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+		'output_directory': string_schema(output_directory_schema_description)
 	}, ['voice_id', 'file', 'text'])
 }
 
@@ -304,7 +367,7 @@ fn generate_video_schema() json2.Any {
 		'first_frame_image': string_schema('Optional first frame image URL or local path.')
 		'resolution':        string_schema('Optional output resolution preset.')
 		'duration':          integer_schema('Optional duration in seconds.')
-		'output_directory':  string_schema('Optional local output directory when resource mode is local.')
+		'output_directory':  string_schema(output_directory_schema_description)
 	}, ['prompt'])
 }
 
@@ -312,7 +375,7 @@ fn query_video_generation_schema() json2.Any {
 	return object_schema_with({
 		'task_id':          string_schema('Video generation task ID to query.')
 		'resource_mode':    string_schema('Optional override for this call: url or local.')
-		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+		'output_directory': string_schema(output_directory_schema_description)
 	}, ['task_id'])
 }
 
@@ -324,7 +387,7 @@ fn text_to_image_schema() json2.Any {
 		'aspect_ratio':     string_schema('Target image aspect ratio.')
 		'n':                integer_schema('Number of images to generate.')
 		'prompt_optimizer': boolean_schema('Whether to enable prompt optimization.')
-		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+		'output_directory': string_schema(output_directory_schema_description)
 	}, ['prompt'])
 }
 
@@ -333,7 +396,7 @@ fn music_generation_schema() json2.Any {
 		'prompt':           string_schema('Text prompt describing the desired music.')
 		'lyrics':           string_schema('Lyrics to render into the generated music.')
 		'resource_mode':    string_schema('Optional override for this call: url or local.')
-		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+		'output_directory': string_schema(output_directory_schema_description)
 	}, ['prompt', 'lyrics'])
 }
 
@@ -343,7 +406,7 @@ fn voice_design_schema() json2.Any {
 		'preview_text':     string_schema('Preview text to synthesize with the designed voice.')
 		'voice_id':         string_schema('Optional existing voice ID to refine.')
 		'resource_mode':    string_schema('Optional override for this call: url or local.')
-		'output_directory': string_schema('Optional local output directory when resource mode is local.')
+		'output_directory': string_schema(output_directory_schema_description)
 	}, ['prompt', 'preview_text'])
 }
 
@@ -524,7 +587,7 @@ fn text_to_audio_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 
 	output_dir := resolve_output_dir(output_directory)
 	output_file := build_output_file_path('t2a', text, format)
-	output_path := output_dir + '/' + output_file
+	output_path := os.join_path(output_dir, output_file)
 	save_hex_payload(output_path, audio_text)!
 
 	return mcp.CallToolResult{
@@ -612,7 +675,7 @@ fn voice_clone_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 
 		output_dir := resolve_output_dir(output_directory)
 		output_file := build_output_file_path('voice_clone', text, 'wav')
-		output_path := output_dir + '/' + output_file
+		output_path := os.join_path(output_dir, output_file)
 		save_resource_payload(output_path, demo_audio.str())!
 
 		return mcp.CallToolResult{
@@ -750,7 +813,7 @@ fn generate_video_handler(name string, arguments ?json2.Any) !mcp.CallToolResult
 
 	output_dir := resolve_output_dir(output_directory)
 	output_file := build_output_file_path('video', task_id.str(), 'mp4')
-	output_path := output_dir + '/' + output_file
+	output_path := os.join_path(output_dir, output_file)
 	download_to_file(video_url, output_path)!
 
 	return mcp.CallToolResult{
@@ -820,7 +883,7 @@ fn query_video_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 
 	output_dir := resolve_output_dir(output_directory)
 	output_file := build_output_file_path('video', task_id.str(), 'mp4')
-	output_path := output_dir + '/' + output_file
+	output_path := os.join_path(output_dir, output_file)
 	download_to_file(video_url, output_path)!
 
 	return mcp.CallToolResult{
@@ -881,7 +944,7 @@ fn text_to_image_handler(name string, arguments ?json2.Any) !mcp.CallToolResult 
 		mut saved_files := []string{}
 		for i, url in arr {
 			output_file := build_output_file_path('image_${i + 1}', prompt.str(), 'jpg')
-			output_path := output_dir + '/' + output_file
+			output_path := os.join_path(output_dir, output_file)
 			download_to_file(url.str(), output_path)!
 			saved_files << output_path
 		}
@@ -940,7 +1003,7 @@ fn music_generation_handler(name string, arguments ?json2.Any) !mcp.CallToolResu
 
 	output_dir := resolve_output_dir(output_directory)
 	output_file := build_output_file_path('music', prompt, default_format)
-	output_path := output_dir + '/' + output_file
+	output_path := os.join_path(output_dir, output_file)
 	save_resource_payload(output_path, audio_text)!
 
 	return mcp.CallToolResult{
@@ -988,7 +1051,7 @@ fn voice_design_handler(name string, arguments ?json2.Any) !mcp.CallToolResult {
 
 		output_dir := resolve_output_dir(output_directory)
 		output_file := build_output_file_path('voice_design', preview_text, 'mp3')
-		output_path := output_dir + '/' + output_file
+		output_path := os.join_path(output_dir, output_file)
 		save_resource_payload(output_path, trial_audio.str())!
 
 		return mcp.CallToolResult{

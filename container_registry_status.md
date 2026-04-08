@@ -13,36 +13,36 @@
 
 ### 在线镜像源列表
 
-| 镜像名称 | URL | 标签 |
-|---------|-----|------|
-| Docker Hub (官方) | https://registry-1.docker.io | CloudFront |
-| 腾讯云镜像仓库 | https://mirror.ccs.tencentyun.com | 腾讯云（仅限腾讯云内网） |
-| 毫秒镜像（免费版） | https://docker.1ms.run | 木雷坞 CloudFlare |
-| 毫秒镜像（付费版） | https://docker.1ms.run | 木雷坞 CDN（需登陆/高可用） |
-| 1Panel | https://docker.1panel.live | 1Panel CloudFlare |
-| CNIX Internal | https://docker.m.ixdev.cn | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
-| 耗子面板 | https://hub.rat.dev | 耗子面板 CloudFlare |
-| 轩辕镜像（免费版） | https://docker.xuanyuan.me | 源码跳动 CloudFlare |
-| 轩辕镜像（专业版） | https://docker.xuanyuan.run | 源码跳动 白山云 CDN（需登陆） |
-| 轩辕镜像（专业版） | https://docker.xuanyuan.dev | 源码跳动 CloudFlare（需登陆） |
-| DockerProxy | https://dockerproxy.net | DockerProxy Oracle CDN |
-| 奶昔论坛 | https://docker-registry.nmqu.com | 奶昔论坛 CloudFlare |
-| 爱铭网络 1 | https://hub.amingg.com | 爱铭网络 CloudFlare |
-| 爱铭网络 2 | https://docker.amingg.com | 爱铭网络 CloudFlare |
-| 厚浪云 | https://docker.hlmirror.com | 厚浪云 CloudFlare |
-| 棉花云 1 | https://hub1.nat.tf | 美国西海岸节点 Nginx |
-| 棉花云 2 | https://hub2.nat.tf | 香港BGP节点 Nginx |
-| 棉花云 3 | https://hub3.nat.tf | 日本东京节点 Nginx |
-| 棉花云 4 | https://hub4.nat.tf | 美国东海岸备用节点 Nginx |
-| 天云港云 | https://run-docker.cn/ | 天云港云 CloudFlare |
-| DaoCloud | https://docker.m.daocloud.io | DaoCloud 阿里云（限速） |
-| 科技 lion | https://docker.kejilion.pro | 自媒体 UP 主 Nginx |
-| 1Panel 三方镜像源 | https://docker.367231.xyz | 1Panel 核心用户 GXL 驱动 CloudFlare |
-| 1Panel 三方镜像源 | https://hub.1panel.dev | 1Panel 核心用户无名驱动 CloudFlare |
-| SUNBALCONY 1 | https://dockerproxy.cool | ipip.icu 博主 EdgeOne |
-| apiba | https://docker.apiba.cn | apiba.cn CloudFlare |
-| mxjia | https://proxy.vvvv.ee | NodeSeek大佬 Nginx |
-| 飞牛 NAS | https://docker.fnnas.com | 飞牛 NAS Nginx（需登陆） |
+| 镜像名称           | URL                               | 标签                                            |
+| ------------------ | --------------------------------- | ----------------------------------------------- |
+| Docker Hub (官方)  | https://registry-1.docker.io      | CloudFront                                      |
+| 腾讯云镜像仓库     | https://mirror.ccs.tencentyun.com | 腾讯云（仅限腾讯云内网）                        |
+| 毫秒镜像（免费版） | https://docker.1ms.run            | 木雷坞 CloudFlare                               |
+| 毫秒镜像（付费版） | https://docker.1ms.run            | 木雷坞 CDN（需登陆/高可用）                     |
+| 1Panel             | https://docker.1panel.live        | 1Panel CloudFlare                               |
+| CNIX Internal      | https://docker.m.ixdev.cn         | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
+| 耗子面板           | https://hub.rat.dev               | 耗子面板 CloudFlare                             |
+| 轩辕镜像（免费版） | https://docker.xuanyuan.me        | 源码跳动 CloudFlare                             |
+| 轩辕镜像（专业版） | https://docker.xuanyuan.run       | 源码跳动 白山云 CDN（需登陆）                   |
+| 轩辕镜像（专业版） | https://docker.xuanyuan.dev       | 源码跳动 CloudFlare（需登陆）                   |
+| DockerProxy        | https://dockerproxy.net           | DockerProxy Oracle CDN                          |
+| 奶昔论坛           | https://docker-registry.nmqu.com  | 奶昔论坛 CloudFlare                             |
+| 爱铭网络 1         | https://hub.amingg.com            | 爱铭网络 CloudFlare                             |
+| 爱铭网络 2         | https://docker.amingg.com         | 爱铭网络 CloudFlare                             |
+| 厚浪云             | https://docker.hlmirror.com       | 厚浪云 CloudFlare                               |
+| 棉花云 1           | https://hub1.nat.tf               | 美国西海岸节点 Nginx                            |
+| 棉花云 2           | https://hub2.nat.tf               | 香港BGP节点 Nginx                               |
+| 棉花云 3           | https://hub3.nat.tf               | 日本东京节点 Nginx                              |
+| 棉花云 4           | https://hub4.nat.tf               | 美国东海岸备用节点 Nginx                        |
+| 天云港云           | https://run-docker.cn/            | 天云港云 CloudFlare                             |
+| DaoCloud           | https://docker.m.daocloud.io      | DaoCloud 阿里云（限速）                         |
+| 科技 lion          | https://docker.kejilion.pro       | 自媒体 UP 主 Nginx                              |
+| 1Panel 三方镜像源  | https://docker.367231.xyz         | 1Panel 核心用户 GXL 驱动 CloudFlare             |
+| 1Panel 三方镜像源  | https://hub.1panel.dev            | 1Panel 核心用户无名驱动 CloudFlare              |
+| SUNBALCONY 1       | https://dockerproxy.cool          | ipip.icu 博主 EdgeOne                           |
+| apiba              | https://docker.apiba.cn           | apiba.cn CloudFlare                             |
+| mxjia              | https://proxy.vvvv.ee             | NodeSeek大佬 Nginx                              |
+| 飞牛 NAS           | https://docker.fnnas.com          | 飞牛 NAS Nginx（需登陆）                        |
 
 ### 推荐配置（daemon.json）
 
@@ -68,16 +68,16 @@
 
 ### 在线镜像源列表
 
-| 镜像名称 | URL | 标签 |
-|---------|-----|------|
-| GHCR (官方) | https://ghcr.io | Azure |
-| 毫秒镜像（免费版） | https://ghcr.1ms.run | 木雷坞 CloudFlare |
-| 毫秒镜像（付费版） | https://ghcr.1ms.run | 木雷坞 CDN（需登陆/高可用） |
-| 南京大学 | https://ghcr.nju.edu.cn | 南大e-Science中心 南大教育网 |
-| CNIX Internal | https://ghcr.m.ixdev.cn | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
-| 轩辕镜像（专业版） | https://xxx-ghcr.xuanyuan.run | 源码跳动 白山云 CDN（需登陆） |
-| DockerProxy | https://ghcr.dockerproxy.net | DockerProxy Oracle CDN |
-| DaoCloud | https://ghcr.m.daocloud.io | DaoCloud 阿里云（限速） |
+| 镜像名称           | URL                           | 标签                                            |
+| ------------------ | ----------------------------- | ----------------------------------------------- |
+| GHCR (官方)        | https://ghcr.io               | Azure                                           |
+| 毫秒镜像（免费版） | https://ghcr.1ms.run          | 木雷坞 CloudFlare                               |
+| 毫秒镜像（付费版） | https://ghcr.1ms.run          | 木雷坞 CDN（需登陆/高可用）                     |
+| 南京大学           | https://ghcr.nju.edu.cn       | 南大e-Science中心 南大教育网                    |
+| CNIX Internal      | https://ghcr.m.ixdev.cn       | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
+| 轩辕镜像（专业版） | https://xxx-ghcr.xuanyuan.run | 源码跳动 白山云 CDN（需登陆）                   |
+| DockerProxy        | https://ghcr.dockerproxy.net  | DockerProxy Oracle CDN                          |
+| DaoCloud           | https://ghcr.m.daocloud.io    | DaoCloud 阿里云（限速）                         |
 
 > ⚠️ 注意：Docker 的 registry-mirrors 配置对 GHCR 不生效，请使用镜像前缀方式拉取
 
@@ -91,15 +91,15 @@
 
 ### 在线镜像源列表
 
-| 镜像名称 | URL | 标签 |
-|---------|-----|------|
-| Quay (官方) | https://quay.io | CloudFront |
-| 南京大学 | https://quay.nju.edu.cn | 南大e-Science中心 南大教育网 |
-| CNIX Internal | https://quay.m.ixdev.cn | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
-| 毫秒镜像（付费版） | https://quay.1ms.run | 木雷坞 CDN（需登陆/高可用） |
-| 轩辕镜像（专业版） | https://xxx-quay.xuanyuan.run | 源码跳动 白山云 CDN（需登陆） |
-| DockerProxy | https://quay.dockerproxy.net | DockerProxy Oracle CDN |
-| DaoCloud | https://quay.m.daocloud.io | DaoCloud 阿里云（限速） |
+| 镜像名称           | URL                           | 标签                                            |
+| ------------------ | ----------------------------- | ----------------------------------------------- |
+| Quay (官方)        | https://quay.io               | CloudFront                                      |
+| 南京大学           | https://quay.nju.edu.cn       | 南大e-Science中心 南大教育网                    |
+| CNIX Internal      | https://quay.m.ixdev.cn       | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
+| 毫秒镜像（付费版） | https://quay.1ms.run          | 木雷坞 CDN（需登陆/高可用）                     |
+| 轩辕镜像（专业版） | https://xxx-quay.xuanyuan.run | 源码跳动 白山云 CDN（需登陆）                   |
+| DockerProxy        | https://quay.dockerproxy.net  | DockerProxy Oracle CDN                          |
+| DaoCloud           | https://quay.m.daocloud.io    | DaoCloud 阿里云（限速）                         |
 
 ---
 
@@ -111,14 +111,14 @@
 
 ### 在线镜像源列表
 
-| 镜像名称 | URL | 标签 |
-|---------|-----|------|
-| MCR (官方) | https://mcr.microsoft.com | Azure |
-| CNIX Internal | https://mcr.m.ixdev.cn | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
-| 毫秒镜像（付费版） | https://mcr.1ms.run | 木雷坞 CDN（需登陆/高可用） |
-| 轩辕镜像（专业版） | https://xxx-mcr.xuanyuan.run | 源码跳动 白山云 CDN（需登陆） |
-| DockerProxy | https://mcr.dockerproxy.net | DockerProxy Oracle CDN |
-| DaoCloud | https://mcr.m.daocloud.io | DaoCloud 阿里云（限速） |
+| 镜像名称           | URL                          | 标签                                            |
+| ------------------ | ---------------------------- | ----------------------------------------------- |
+| MCR (官方)         | https://mcr.microsoft.com    | Azure                                           |
+| CNIX Internal      | https://mcr.m.ixdev.cn       | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
+| 毫秒镜像（付费版） | https://mcr.1ms.run          | 木雷坞 CDN（需登陆/高可用）                     |
+| 轩辕镜像（专业版） | https://xxx-mcr.xuanyuan.run | 源码跳动 白山云 CDN（需登陆）                   |
+| DockerProxy        | https://mcr.dockerproxy.net  | DockerProxy Oracle CDN                          |
+| DaoCloud           | https://mcr.m.daocloud.io    | DaoCloud 阿里云（限速）                         |
 
 ---
 
@@ -130,15 +130,15 @@
 
 ### 在线镜像源列表
 
-| 镜像名称 | URL | 标签 |
-|---------|-----|------|
-| K8s Registry (官方) | https://registry.k8s.io | Google Cloud |
-| 南京大学 | https://k8s.nju.edu.cn | 南大e-Science中心 南大教育网 |
-| CNIX Internal | https://k8s.m.ixdev.cn | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
-| 毫秒镜像（付费版） | https://k8s.1ms.run | 木雷坞 CDN（需登陆/高可用） |
-| 轩辕镜像（专业版） | https://xxx-k8s.xuanyuan.run | 源码跳动 白山云 CDN（需登陆） |
-| DockerProxy | https://k8s.dockerproxy.net | DockerProxy Oracle CDN |
-| DaoCloud | https://k8s.m.daocloud.io | DaoCloud 阿里云（限速） |
+| 镜像名称            | URL                          | 标签                                            |
+| ------------------- | ---------------------------- | ----------------------------------------------- |
+| K8s Registry (官方) | https://registry.k8s.io      | Google Cloud                                    |
+| 南京大学            | https://k8s.nju.edu.cn       | 南大e-Science中心 南大教育网                    |
+| CNIX Internal       | https://k8s.m.ixdev.cn       | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
+| 毫秒镜像（付费版）  | https://k8s.1ms.run          | 木雷坞 CDN（需登陆/高可用）                     |
+| 轩辕镜像（专业版）  | https://xxx-k8s.xuanyuan.run | 源码跳动 白山云 CDN（需登陆）                   |
+| DockerProxy         | https://k8s.dockerproxy.net  | DockerProxy Oracle CDN                          |
+| DaoCloud            | https://k8s.m.daocloud.io    | DaoCloud 阿里云（限速）                         |
 
 ---
 
@@ -150,14 +150,14 @@
 
 ### 在线镜像源列表
 
-| 镜像名称 | URL | 标签 |
-|---------|-----|------|
-| GCR (官方) | https://gcr.io | Google Cloud |
-| 南京大学 | https://gcr.nju.edu.cn | 南大e-Science中心 南大教育网 |
-| DaoCloud | https://gcr.m.daocloud.io | DaoCloud 阿里云（限速） |
-| 毫秒镜像（付费版） | https://gcr.1ms.run | 木雷坞 CDN（需登陆/高可用） |
+| 镜像名称           | URL                          | 标签                          |
+| ------------------ | ---------------------------- | ----------------------------- |
+| GCR (官方)         | https://gcr.io               | Google Cloud                  |
+| 南京大学           | https://gcr.nju.edu.cn       | 南大e-Science中心 南大教育网  |
+| DaoCloud           | https://gcr.m.daocloud.io    | DaoCloud 阿里云（限速）       |
+| 毫秒镜像（付费版） | https://gcr.1ms.run          | 木雷坞 CDN（需登陆/高可用）   |
 | 轩辕镜像（专业版） | https://xxx-gcr.xuanyuan.run | 源码跳动 白山云 CDN（需登陆） |
-| DockerProxy | https://gcr.dockerproxy.net | DockerProxy Oracle CDN |
+| DockerProxy        | https://gcr.dockerproxy.net  | DockerProxy Oracle CDN        |
 
 ---
 
@@ -169,13 +169,13 @@
 
 ### 在线镜像源列表
 
-| 镜像名称 | URL | 标签 |
-|---------|-----|------|
-| Elastic (官方) | https://docker.elastic.co | Google Cloud |
-| CNIX Internal | https://elastic.m.ixdev.cn | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
-| DaoCloud | https://elastic.m.daocloud.io | DaoCloud 阿里云（限速） |
-| 毫秒镜像（付费版） | https://elastic.1ms.run | 木雷坞 CDN（需登陆/高可用） |
-| 轩辕镜像（专业版） | https://xxx-elastic.xuanyuan.run | 源码跳动 白山云 CDN（需登陆） |
+| 镜像名称           | URL                              | 标签                                            |
+| ------------------ | -------------------------------- | ----------------------------------------------- |
+| Elastic (官方)     | https://docker.elastic.co        | Google Cloud                                    |
+| CNIX Internal      | https://elastic.m.ixdev.cn       | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
+| DaoCloud           | https://elastic.m.daocloud.io    | DaoCloud 阿里云（限速）                         |
+| 毫秒镜像（付费版） | https://elastic.1ms.run          | 木雷坞 CDN（需登陆/高可用）                     |
+| 轩辕镜像（专业版） | https://xxx-elastic.xuanyuan.run | 源码跳动 白山云 CDN（需登陆）                   |
 
 ---
 
@@ -187,14 +187,14 @@
 
 ### 在线镜像源列表
 
-| 镜像名称 | URL | 标签 |
-|---------|-----|------|
-| NVCR (官方) | https://nvcr.io | CloudFront |
-| 南京大学 | https://ngc.nju.edu.cn | 南大e-Science中心 南大教育网 |
-| CNIX Internal | https://nvcr.m.ixdev.cn | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
-| 毫秒镜像（付费版） | https://nvcr.1ms.run | 木雷坞 CDN（需登陆/高可用） |
-| 轩辕镜像（专业版） | https://xxx-nvcr.xuanyuan.run | 源码跳动 白山云 CDN（需登陆） |
-| DaoCloud | https://nvcr.m.daocloud.io | DaoCloud 阿里云（限速） |
+| 镜像名称           | URL                           | 标签                                            |
+| ------------------ | ----------------------------- | ----------------------------------------------- |
+| NVCR (官方)        | https://nvcr.io               | CloudFront                                      |
+| 南京大学           | https://ngc.nju.edu.cn        | 南大e-Science中心 南大教育网                    |
+| CNIX Internal      | https://nvcr.m.ixdev.cn       | 国家(深圳·前海)新型互联网交换中心 Nginx 广东BGP |
+| 毫秒镜像（付费版） | https://nvcr.1ms.run          | 木雷坞 CDN（需登陆/高可用）                     |
+| 轩辕镜像（专业版） | https://xxx-nvcr.xuanyuan.run | 源码跳动 白山云 CDN（需登陆）                   |
+| DaoCloud           | https://nvcr.m.daocloud.io    | DaoCloud 阿里云（限速）                         |
 
 ---
 
